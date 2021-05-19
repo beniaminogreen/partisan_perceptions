@@ -1,0 +1,14 @@
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.log
+*.run
+*.run.xml
+*.tex
+*.tex
+**/__pycache__/
+**/cache/
+env/
+**/figure/
+readings/
