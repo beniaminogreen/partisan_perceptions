@@ -23,16 +23,25 @@ their own computers using [Docker](https://www.docker.com/).
 [`report/`](report/), a folder containing the resources needed to render and run the
 paper, including :
 
- * [`report.rmd`](report/report.rmd) the manuscript file, written in Rmarkdown
+ * [`report.Rmd`](report/report.Rmd) the manuscript file, written in Rmarkdown
  * [`bibliography.bib`](report/bibliography.bib) the bibtex bibliography file
 
-## Replication With Docker
+## Replication / Rendering With Docker
+
+This repository has been set up to allow readers to edit the files without
+having to install any dependencies using docker. This allows readers without a
+working R installation to edit the document on their own machines.
+
+To edit the repository on your own computer, complete the following steps.
+You must have [docker](https://docs.docker.com/get-docker/) installed for your system.
+
 Clone this repository using git:
 
 ```
 git clone git@github.com:beniaminogreen/this_thing.git
 ```
 
+Make the desired edits to the [`report.Rmd`](report/report.Rmd) file.
 Then, depending on your system, run the following commands.
 
 ### Using Linux / Mac / Windows Power Shell:
