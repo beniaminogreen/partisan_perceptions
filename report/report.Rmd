@@ -272,6 +272,18 @@ stargazer(factor_ideo_moral1, factor_ideo_moral2, factor_ideo_moral3, factor_ide
 )
 ```
 
+## Effects Graph
+```{r, message=F,echo=F}
+data %>%
+	ggplot(aes(x=conservative_action, y=moral_just, group=factor_ideo5, col=factor_ideo5)) +
+	geom_smooth(aes(weight=weight_pol), method="lm") +
+	ggtitle("Interaction Effects of Ideology / Conservative Action on Perception\nOf Moral Justification") +
+	xlab("Conservative Action") +
+	ylab("Moral Justification") +
+	labs(col = "Respondent Ideology")
+```
+
+
 # Ideology on Strategy
 ## Interval Measure
 
@@ -360,6 +372,18 @@ stargazer(factor_ideo_strategic1, factor_ideo_strategic2, factor_ideo_strategic3
 	digits = 2,
     label="p_strategic"
 )
+
+```
+
+## Effects Graph
+```{r, message=F,echo=F}
+data %>%
+	ggplot(aes(x=conservative_action, y=strategic, group=factor_ideo5, col=factor_ideo5)) +
+	geom_smooth(aes(weight=weight_pol), method="lm") +
+	ggtitle("Interaction Effects of Ideology / Conservative Action on Perceptions\nOf Strategy") +
+	xlab("Conservative Action") +
+	ylab("Agreement Action is Strategic") +
+	labs(col = "Respondent Ideology")
 
 ```
 
@@ -462,6 +486,17 @@ Across all models, the interactions between the liberal respondent and
 conservative action terms were insignificant, indicating that liberal
 respondents were not significantly different from moderate respondents in how
 they reacted to conservative actions.
+
+## Effects Graph
+```{r, message=F,echo=F}
+data %>%
+	ggplot(aes(x=conservative_action, y=terrorism, group=factor_ideo5, col=factor_ideo5)) +
+	geom_smooth(aes(weight=weight_pol), method="lm") +
+	ggtitle("Interaction Effects of Ideology / Conservative Action on Perceptions of Terroism") +
+	xlab("Conservative Action") +
+	ylab("Agreement Action is Terroism") +
+	labs(col = "Respondent Ideology")
+```
 
 
 <!---
