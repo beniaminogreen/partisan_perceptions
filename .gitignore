@@ -1,3 +1,6 @@
+**/__pycache__/
+**/cache/
+**/figure/
 *.aux
 *.bbl
 *.bcf
@@ -5,10 +8,8 @@
 *.log
 *.run
 *.run.xml
+*.spl
 *.tex
 *.tex
-**/__pycache__/
-**/cache/
 env/
-**/figure/
 readings/

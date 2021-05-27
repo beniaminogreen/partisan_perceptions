@@ -107,9 +107,9 @@ data <- read_csv("../data/original_yougov.csv") %>%
       ),
 	factor_ideo5 =
 		case_when(
-				  ideo5 <=2 ~ "Liberal / V. Liberal",
+				  ideo5 <=2 ~ "(V.) Liberal",
 				  ideo5 == 3 ~ "Moderate",
-				  ideo5 %in% c(4,5) ~ "Conservative / V. Conservative",
+				  ideo5 %in% c(4,5) ~ "(V.) Conservative",
 				  ideo5 == 6 ~ "Not Sure",
 				  ) %>%
 	factor() %>% relevel(ref="Moderate"),
@@ -275,12 +275,30 @@ stargazer(factor_ideo_moral1, factor_ideo_moral2, factor_ideo_moral3, factor_ide
 ## Effects Graph
 ```{r, message=F,echo=F}
 data %>%
-	ggplot(aes(x=conservative_action, y=moral_just, group=factor_ideo5, col=factor_ideo5)) +
-	geom_smooth(aes(weight=weight_pol), method="lm") +
+	ggplot(aes(x=conservative_action, y=moral_just, group=factor_ideo5, linetype=factor_ideo5)) +
+	geom_smooth(aes(weight=weight_pol), col="black", method="lm") +
 	ggtitle("Interaction Effects of Ideology / Conservative Action on Perception\nOf Moral Justification") +
-	xlab("Conservative Action") +
-	ylab("Moral Justification") +
-	labs(col = "Respondent Ideology")
+	ylab("Moral Justification\n(Higher Scores Mean More Justified)") +
+	xlab("Action type") +
+	scale_x_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
+	labs(linetype = "Respondent ideology") +
+	theme_classic()
+
+ggsave("../charts/partisanship_justification.png")
+
+```
+
+## Effects of Casualties
+```{r, message=F,echo=F}
+data %>%
+	ggplot(aes(x=casualties, y=moral_just, group="hey")) +
+	geom_smooth(aes(weight=weight_pol), col = "black", method="lm") +
+	ggtitle("Relationship between Casualties on Perceptions\nOf Strategy") +
+	ylab("Moral Justification\n(Higher Scores Mean More Justified)") +
+	xlab("Action Caused Casualties") +
+	theme_classic()
+
+ggsave("../charts/casualties_justification.png")
 ```
 
 
@@ -378,13 +396,29 @@ stargazer(factor_ideo_strategic1, factor_ideo_strategic2, factor_ideo_strategic3
 ## Effects Graph
 ```{r, message=F,echo=F}
 data %>%
-	ggplot(aes(x=conservative_action, y=strategic, group=factor_ideo5, col=factor_ideo5)) +
-	geom_smooth(aes(weight=weight_pol), method="lm") +
+	ggplot(aes(x=conservative_action, y=strategic, group=factor_ideo5, linetype=factor_ideo5)) +
+	geom_smooth(aes(weight=weight_pol), col="black", method="lm") +
 	ggtitle("Interaction Effects of Ideology / Conservative Action on Perceptions\nOf Strategy") +
-	xlab("Conservative Action") +
-	ylab("Agreement Action is Strategic") +
-	labs(col = "Respondent Ideology")
+	ylab("Perceptions of Strategy \n(Higher Scores Mean More Strategic)") +
+	xlab("Action type") +
+	scale_x_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
+	labs(linetype = "Respondent ideology") +
+	theme_classic()
 
+ggsave("../charts/partisanship_strategy.png")
+```
+
+## Effects of Casualties
+```{r, message=F,echo=F}
+data %>%
+	ggplot(aes(x=casualties, y=strategic, group="hey")) +
+	geom_smooth(aes(weight=weight_pol), col = "black", method="lm") +
+	ggtitle("Relationship between Casualties on Perceptions\nOf Strategy") +
+	ylab("Moral Justification\n(Higher Scores Mean More Justified)") +
+	xlab("Action Caused Casualties") +
+	theme_classic()
+
+ggsave("../charts/casualties_strategy.png")
 ```
 
 # Ideology on Perceptions of Actions as Terrorism
@@ -488,14 +522,31 @@ respondents were not significantly different from moderate respondents in how
 they reacted to conservative actions.
 
 ## Effects Graph
+```{r, message=F,echo=F,warn=F}
+data %>%
+	ggplot(aes(x=conservative_action, y=terrorism, group=factor_ideo5, linetype=factor_ideo5)) +
+	geom_smooth(aes(weight=weight_pol), col="black", method="lm") +
+	ggtitle("Interaction Effects of Ideology / Conservative Action on Perceptions\nOf Terroism") +
+	ylab("Perceptions of Terroism \n(Higher Scores Mean More Terroristic)") +
+	xlab("Action type") +
+	scale_x_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
+	labs(linetype = "Respondent ideology") +
+	theme_classic()
+
+ggsave("../charts/parsanship_terrorism.png")
+```
+
+## Effects of Casualties
 ```{r, message=F,echo=F}
 data %>%
-	ggplot(aes(x=conservative_action, y=terrorism, group=factor_ideo5, col=factor_ideo5)) +
-	geom_smooth(aes(weight=weight_pol), method="lm") +
-	ggtitle("Interaction Effects of Ideology / Conservative Action on Perceptions of Terroism") +
-	xlab("Conservative Action") +
-	ylab("Agreement Action is Terroism") +
-	labs(col = "Respondent Ideology")
+	ggplot(aes(x=casualties, y=terrorism, group="hey")) +
+	geom_smooth(aes(weight=weight_pol), col = "black", method="lm") +
+	ggtitle("Relationship between Casualties on Perceptions\nOf Terrorism") +
+	ylab("Terrorism \n(Higher Scores Mean More Terroristic)") +
+	xlab("Action Caused Casualties") +
+	theme_classic()
+
+ggsave("../charts/casualties_terrorism.png")
 ```
 
 
@@ -654,3 +705,4 @@ actions as terrorism more than those in the reference category, respondents who
 identified as affiliated with a party not surveyed.
 
 --->
+

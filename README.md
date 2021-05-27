@@ -38,7 +38,7 @@ You must have [docker](https://docs.docker.com/get-docker/) installed for your s
 Clone this repository using git:
 
 ```
-git clone git@github.com:beniaminogreen/this_thing.git
+git clone git@github.com:beniaminogreen/partisan_perceptions.git
 ```
 
 Make the desired edits to the [`report.Rmd`](report/report.Rmd) file.
