@@ -1,0 +1,17 @@
+---
+title: This Article Looks Quite Authoritative
+author: Author Name
+output: pdf_document
+urlcolor: blue
+---
+
+```{r load_libraries, echo=F, include=F}
+# This code loads the libraries used in the analysis into memory
+library(tidyverse)
+library(stargazer)
+```
+
+```{r load_data, echo=F, include=F}
+load("data/models.Rdata")
+```
+

@@ -1,0 +1,728 @@
+---
+title: This Article Looks Quite Authoritative
+author: Author Name
+output: pdf_document
+urlcolor: blue
+---
+
+```{r load_libraries, echo=F, include=F}
+# This code loads the libraries used in the analysis into memory
+library(tidyverse)
+library(stargazer)
+```
+
+```{r load_data, echo=F, include=F}
+# This section loads the data from the original survey and recodes and
+# transforms the variables into the ones used in the paper
+
+data <- read_csv("../data/original_yougov.csv") %>%
+  rename(moral_just = ucl_1_1, strategic = ucl_1_2, terrorism = ucl_1_3) %>%
+  mutate(
+  casualties = experiment_split %in% c(2,4,6,8,10,12),
+  conservative_action = experiment_split %in% c(1,2,5,6,9,10),
+    experiment_split = experiment_split %>%
+      dplyr::recode(
+        `1` = "Abortion advocacy, no injuries",
+        `2` = "Abortion advocacy, casualties",
+        `3` = "Abortion restriction, no injuries",
+        `4` = "Abortion restriction, casualties",
+        `5` = "Environmental advocacy, no injuries",
+        `6` = "Environmental advocacy, casualties",
+        `7` = "Fossil fuel advocacy, no injuries",
+        `8` = "Fossil fuel advocacy, casualties",
+        `9` = "Immigration advocacy, no injuries",
+        `10` = "Immigration advocacy, casualties",
+        `11` = "Immigration restriction, no injuries",
+        `12` = "Immigration restriction, casualties"
+      ),
+    pid3 = pid3 %>%
+      dplyr::recode_factor(
+        `4` = "Other",
+        `5` = "Not Sure",
+        `1` = "Democrat",
+        `2` = "Republican",
+        `3` = "Independent",
+      ),
+    region = region %>%
+      dplyr::recode(
+        `1` = "Northeast",
+        `2` = "Midwest",
+        `3` = "South",
+        `4` = "West"
+      ),
+    vote = presvote20post %>%
+      dplyr::recode_factor(
+        `6` = "Did not vote",
+        `1` = "Joe Biden",
+        `2` = "Donald Trump",
+        `3` = "Jo Jorgensen",
+        `4` = "Howie Hawkins",
+        `5` = "Other"
+      ),
+    race = race %>%
+      dplyr::recode_factor(
+        `1` = "White",
+        `2` = "Black",
+        `3` = "Hispanic",
+        `4` = "Other (NET)"
+      ),
+    educ = educ %>%
+      dplyr::recode_factor(
+        `1` = "No HS",
+        `2` = "High school graduate",
+        `3` = "Some college",
+        `4` = "2-year",
+        `5` = "4-year",
+        `6` = "Postgrad",
+        .ordered = TRUE
+    ),
+    female = gender == 2,
+    gender = gender %>%
+        recode(
+        `1` = "Male",
+        `2` = "Female",
+       ),
+    profile_gross_household_num = profile_gross_household,
+    profile_gross_household = profile_gross_household %>%
+        recode_factor(
+        `1` = "[0,10,000)",
+        `2` = "[10k,20k)",
+        `3` = "[20k,30k)",
+        `4` = "[30k,40k)",
+        `5` = "[40k,50k)",
+        `6` = "[50k,60k)",
+        `7` = "[60k,70k)",
+        `8` = "[70k,80k)",
+        `9` = "[80k,100k)",
+        `10` = "[100k,120k)",
+        `11` = "[120k,150k)",
+        `12` = "[150k,200k)",
+        `13` = "[200k,250k)",
+        `14` = "[250k,350k)",
+        `15` = "[350k,500k)",
+        `16` = "[500k,Inf)",
+        `98` = "Don't know",
+        `99` = "Prefer not to answer",
+        .ordered = TRUE
+      ),
+	factor_ideo5 =
+		case_when(
+				  ideo5 <=2 ~ "(V.) Liberal",
+				  ideo5 == 3 ~ "Moderate",
+				  ideo5 %in% c(4,5) ~ "(V.) Conservative",
+				  ideo5 == 6 ~ "Not Sure",
+				  ) %>%
+	factor() %>% relevel(ref="Moderate"),
+	ide05 = na_if(ideo5, 6)-3,
+    moral_just = -1*(moral_just-4),
+    strategic = -1*(strategic-4),
+    terrorism = -1*(terrorism-4)
+  )
+```
+
+# Tools
+
+To streamline editing and minimize errors, I have written this document in
+[Rmarkdown](https://rmarkdown.rstudio.com/).  So that others can edit this
+document without having to install a working version of R, I provide a [docker
+image](https://www.docker.com/) which will run R and compile the document in a
+container.
+
+Documentation for working with Rmarkdown can be found [here](https://bookdown.org/yihui/rmarkdown/).
+
+Docker documentation can be found [here](https://docs.docker.com/).
+
+# Variables
+
+In this section I describe the variables used in the analysis.  I provide a
+table of summary statistics for the continuous and dummy variables used in the
+analysis below.
+
+Responses to the questions "is this action terrorism?", "was this action
+morally justified?", and "was this action strategic?" were originally
+collected on a 1-7 scale, where 1 indicated strong agreement and 7 indicated
+strong disagreement.  I rescale responses to between -3 and 3, where -3 now
+indicates strong disagreement, 0 indicates a neutral answer, and 3 indicates
+strong agreement.
+
+In the original YouGov survey, respondents were asked to identify their
+ideology as either "Very Liberal," "Liberal," "Moderate," "Conservative," "Very
+Conservative," or "Don't Know."
+
+For analyses involving respondents' ideology, I operationalize ideology using
+both a categorical measure and an interval level measure.  The categorical
+measure of ideology recovers the effect of switching a respondent from one
+ideology to another (i.e, switching from moderate to liberal), while the
+interval-level measurement recovers the average effect of a moving a respondent
+one space up or down the ideology scale.  To construct the categorical
+measurement of ideology, I code respondents as either Liberal if they recorded
+their ideology as "very liberal or "liberal", moderate if they described
+themselves as moderates, conservative if they described themselves as somewhat
+or very conservative, and "not sure" as they reported being unsure about which
+category they fit into.  I set the reference level in these analyses as
+"Moderate." For the interval-level measure, I remove "Don't Know" and scale
+answers to a -2-2 scale, where -2 indicates a very liberal respondent, and +2
+indicates a very Conservative respondent.
+
+
+```{r summary_statistics, results= "asis", echo=F}
+# Create tables of summary statistics
+summ_data <- data %>%
+select(ideo5,moral_just,strategic, terrorism, conservative_action, female,casualties) %>%
+rename("Ideology" = "ideo5",
+	   "Moral Justification" = "moral_just",
+	   "Strategic"="strategic",
+	   "Terrorism" = "terrorism",
+	   "Conservative Action" = "conservative_action",
+	   "Female"="female",
+	   "Casualties"="casualties")
+
+
+summ_data %>%
+	data.frame() %>%
+	stargazer(title="Summary Statistics For All Respondents",header=F, digits=2)
+
+data %>%
+	select(factor_ideo5,moral_just,conservative_action, strategic, terrorism) %>%
+	group_by(factor_ideo5) %>%
+	summarize("Mean Strategic" = mean(strategic), "Mean Morally Justifiable"=mean(moral_just), "Mean Terroism" =mean(terrorism)) %>%
+	rename("Party" = "factor_ideo5") %>%
+	data.frame() %>%
+	stargazer(title = "Mean Responses by Party",summary=F, digits=2, header=F)
+
+data %>%
+	select(factor_ideo5,moral_just,conservative_action, strategic, terrorism) %>%
+	group_by(factor_ideo5,conservative_action) %>%
+	summarize("Mean Strategic" = mean(strategic), "Mean Morally Justifiable"=mean(moral_just), "Mean Terroism" =mean(terrorism)) %>%
+	rename("Party" = "factor_ideo5","Conservative Action" = "conservative_action") %>%
+	data.frame() %>%
+	stargazer(title = "Mean Responses by Party, Action Alignment",summary=F, digits=2, header=F)
+
+```
+
+# Ideology on Moral Justification
+
+First, I examine the relationship between a respondent's ideology and their
+views of the actions as morally justifiable.  There is a significant positive
+relationship between a respondent's ideology on a five point scale and
+perceptions of moral justifiability indicating that *ceretis paribus*,
+conservatives rated the actions as more justifiable than liberals or moderates.
+
+The interactions between an action being conservative and a respondent's
+ideology are uniformly significant and positive, indicating that respondents
+that are more conservative see conservative actions as significantly more
+justifiable than liberal actions, and vice versa.
+
+```{r idology_moral_responsibility, results= "asis", echo=F}
+# Estimates relationships between ideology and perceptions of moral
+# justifiability with an interval measure of ideology
+ideo_moral1 <- lm(moral_just ~ ideo5, data = data, weights = weight_pol)
+ideo_moral2 <- lm(moral_just ~ ideo5 + conservative_action, data = data, weights = weight_pol)
+ideo_moral3 <- lm(moral_just ~ ideo5 + conservative_action + ideo5:conservative_action, data = data, weights = weight_pol)
+ideo_moral4 <- lm(moral_just ~ ideo5 + conservative_action + ideo5:conservative_action + casualties, data = data, weights = weight_pol)
+ideo_moral5 <- lm(moral_just ~ ideo5 + conservative_action + ideo5:conservative_action + casualties + female, data = data, weights = weight_pol)
+ideo_moral6 <- lm(moral_just ~ ideo5 + conservative_action + ideo5:conservative_action + casualties + female + race, data = data, weights = weight_pol)
+
+
+stargazer(ideo_moral1, ideo_moral2, ideo_moral3, ideo_moral4, ideo_moral5, ideo_moral6,
+    title="Ideology vs Moral Justifiability",
+    dep.var.labels = c("Action is morally justifiable"),
+	covariate.labels =
+	  c("Ideology", "Conservative Action","Casualties",
+	   "Female","Black", "Hispanic","Race --- other",
+	   "Ideology $\\times$ conserv. act.",
+	   "Intercept"),
+    df=F,
+	digits = 2,
+	header=F,
+    label = "p_moral_just"
+)
+```
+
+## Categorical Measure
+
+In this section, I investigate the relationship between ideology and
+perceptions of the actions as morally justifiability.
+
+Surprisingly, there is no significant relationship between the presence of
+casualties and perceptions of moral justifiability, indicating that the
+presence of casualties had no effect on perceptions of moral justifiability
+*ceritis paribus*.
+
+Across all models, the estimate of the affect associated with an action being
+conservative is significant and negative indicating that among moderate
+respondents, an action being conservative was associated with a decrease in
+perceptions of it as moral justifiability.
+
+Across all models, there is a significant positive interaction between the
+conservative action term and the conservative respondent term indicating that
+relative to moderate respondents, conservatives found conservative actions more
+justified.  There is no significant interaction between the liberal respondent
+and conservative action terms, indicating that liberal respondents did not
+react significantly differently to conservative / liberal actions than moderate
+respondents.
+
+
+
+```{r iedology_2_moral_responsibility, results= "asis", echo=F}
+# Estimates effects of ideology on perceptions of moral justifiability, using a
+# categorical measure of ideology
+factor_ideo_moral1 <- lm(moral_just ~ factor_ideo5, data = data, weights = weight_pol)
+factor_ideo_moral2 <- lm(moral_just ~ factor_ideo5 + conservative_action, data = data, weights = weight_pol)
+factor_ideo_moral3 <- lm(moral_just ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action, data = data, weights = weight_pol)
+factor_ideo_moral4 <- lm(moral_just ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action + casualties, data = data, weights = weight_pol)
+factor_ideo_moral5 <- lm(moral_just ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action + casualties + female, data = data, weights = weight_pol)
+factor_ideo_moral6 <- lm(moral_just ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action + casualties + female + race, data = data, weights = weight_pol)
+
+
+stargazer(factor_ideo_moral1, factor_ideo_moral2, factor_ideo_moral3, factor_ideo_moral4, factor_ideo_moral5, factor_ideo_moral6,
+    title="Ideology vs Moral Justifiability",
+    dep.var.labels = c("Action is morally justifiable"),
+	  covariate.labels = c("Conservative", "Liberal","Not Sure",
+		"C. Action","Casualties",
+	   "Female","Black", "Hispanic","Race --- other",
+	   "Conservative $\\times$ C. Action",
+	   "Liberal $\\times$ C. Action",
+	   "Not Sure $\\times$ C. Action",
+	   "Intercept"),
+    df=F,
+	header=F,
+	digits = 2,
+    label = "p_moral_just"
+)
+```
+
+## Effects Graph
+```{r, message=F,echo=F}
+data %>%
+	ggplot(aes(x=conservative_action, y=moral_just, group=factor_ideo5, linetype=factor_ideo5)) +
+	geom_smooth(aes(weight=weight_pol), col="black", method="lm") +
+	ggtitle("Interaction Effects of Ideology / Conservative Action on Perception\nOf Moral Justification") +
+	ylab("Moral Justification\n(Higher Scores Mean More Justified)") +
+	xlab("Action type") +
+	scale_x_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
+	labs(linetype = "Respondent ideology") +
+	theme_classic()
+
+ggsave("../charts/partisanship_justification.png")
+
+```
+
+## Effects of Casualties
+```{r, message=F,echo=F}
+data %>%
+	ggplot(aes(x=casualties, y=moral_just, group="hey")) +
+	geom_smooth(aes(weight=weight_pol), col = "black", method="lm") +
+	ggtitle("Relationship between Casualties on Perceptions\nOf Strategy") +
+	ylab("Moral Justification\n(Higher Scores Mean More Justified)") +
+	xlab("Action Caused Casualties") +
+	theme_classic()
+
+ggsave("../charts/casualties_justification.png")
+```
+
+
+# Ideology on Strategy
+## Interval Measure
+
+In this section, I investigate the relationships between a respondent's
+ideology on a five point scale, and their views of the actions as strategic.
+
+Across all models, there is a significant negative relationship between an
+action resulting in casualties and perceptions of it as strategic indicating
+that holding all other factors constant, an action resulting in causalities was
+associated with lower perceptions of it as strategic, relative to an identical
+action that did not produce casualties.
+
+When controlling for the interaction between respondents' ideologies and an
+action being conservative, there is a positive relationship between ideology on
+a five-point scale and perceptions of the actions as strategic.  This indicates
+more conservative respondents saw the actions as more justified *ceritis
+paribus*.  Insignificant interactions between the respondent ideology term and
+the conservative action indicates that a respondent's ideology does not
+influence the effect that an action being liberal conservative has on their
+view of it as strategic.
+
+```{r ideology_strategic, results= "asis", echo=F}
+# Estimates effects of ideology on perceptions of the actions as strategic,
+# using an interval-level measure of ideology
+
+ideo_strategic1 <- lm(strategic ~ ideo5, data = data, weights = weight_pol)
+ideo_strategic2 <- lm(strategic ~ ideo5 + conservative_action, data = data, weights = weight_pol)
+ideo_strategic3 <- lm(strategic ~ ideo5 + conservative_action + ideo5:conservative_action, data = data, weights = weight_pol)
+ideo_strategic4 <- lm(strategic ~ ideo5 + conservative_action + ideo5:conservative_action + casualties, data = data, weights = weight_pol)
+ideo_strategic5 <- lm(strategic ~ ideo5 + conservative_action + ideo5:conservative_action + casualties + female, data = data, weights = weight_pol)
+ideo_strategic6 <- lm(strategic ~ ideo5 + conservative_action + ideo5:conservative_action + casualties + female + race, data = data, weights = weight_pol)
+
+stargazer(ideo_strategic1, ideo_strategic2, ideo_strategic3, ideo_strategic4,ideo_strategic5,ideo_strategic6,
+    title="Ideology Vs Perceptions of Actions as Strategic",
+    dep.var.labels = c("Action is strategic"),
+	covariate.labels = c("Ideology", "Conservative Action","Casualties",
+		"Female","Black", "Hispanic","Race --- other",
+		"Ideology $\\times$ conserv. act.",
+		"Intercept"),
+    df=F,
+	header=F,
+	digits = 2,
+    label="p_strategic"
+)
+```
+
+## Categorical Measure
+
+In this section, I analyze the effects of ideology on perceptions of the
+strategic usefulness of an action using a categorical measurement of ideology.
+Again, The reference level for this measure is "moderate."
+
+The coefficient associated with a respondent being liberal is significant and
+negative across all models, indicating that relative to moderate respondents,
+liberals saw all actions as less justified.  The coefficient associated with a
+respondent being conservative is not significant across all models indicating
+that there were no significant differences between how conservative respondents
+and moderate respondents perceived the actions as strategic.  Insignificant
+interactions between the ideology variables indicate that a respondents
+ideology does not influence how they react to an action being conservative /
+liberal.
+
+```{r factor_ideology_strategic, results= "asis", echo=F}
+# Estimates effects of ideology on perceptions of the actions as strategic,
+# using a categorical measure of ideology
+
+factor_ideo_strategic1 <- lm(strategic ~ factor_ideo5, data = data, weights = weight_pol)
+factor_ideo_strategic2 <- lm(strategic ~ factor_ideo5 + conservative_action, data = data, weights = weight_pol)
+factor_ideo_strategic3 <- lm(strategic ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action, data = data, weights = weight_pol)
+factor_ideo_strategic4 <- lm(strategic ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action + casualties, data = data, weights = weight_pol)
+factor_ideo_strategic5 <- lm(strategic ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action + casualties + female, data = data, weights = weight_pol)
+factor_ideo_strategic6 <- lm(strategic ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action + casualties + female + race, data = data, weights = weight_pol)
+
+stargazer(factor_ideo_strategic1, factor_ideo_strategic2, factor_ideo_strategic3, factor_ideo_strategic4,factor_ideo_strategic5,factor_ideo_strategic6,
+    title="Ideology Vs Perceptions of Actions as Strategic",
+    dep.var.labels = c("Action is strategic"),
+	  covariate.labels = c("Conservative", "Liberal","Not Sure",
+		"C. Action","Casualties",
+	   "Female","Black", "Hispanic","Race --- other",
+	   "Conservative $\\times$ C. Action",
+	   "Liberal $\\times$ C. Action",
+	   "Not Sure $\\times$ C. Action",
+	   "Intercept"),
+    df=F,
+	header=F,
+	digits = 2,
+    label="p_strategic"
+)
+
+```
+
+## Effects Graph
+```{r, message=F,echo=F}
+data %>%
+	ggplot(aes(x=conservative_action, y=strategic, group=factor_ideo5, linetype=factor_ideo5)) +
+	geom_smooth(aes(weight=weight_pol), col="black", method="lm") +
+	ggtitle("Interaction Effects of Ideology / Conservative Action on Perceptions\nOf Strategy") +
+	ylab("Perceptions of Strategy \n(Higher Scores Mean More Strategic)") +
+	xlab("Action type") +
+	scale_x_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
+	labs(linetype = "Respondent ideology") +
+	theme_classic()
+
+ggsave("../charts/partisanship_strategy.png")
+```
+
+## Effects of Casualties
+```{r, message=F,echo=F}
+data %>%
+	ggplot(aes(x=casualties, y=strategic, group="hey")) +
+	geom_smooth(aes(weight=weight_pol), col = "black", method="lm") +
+	ggtitle("Relationship between Casualties on Perceptions\nOf Strategy") +
+	ylab("Moral Justification\n(Higher Scores Mean More Justified)") +
+	xlab("Action Caused Casualties") +
+	theme_classic()
+
+ggsave("../charts/casualties_strategy.png")
+```
+
+# Ideology on Perceptions of Actions as Terrorism
+
+## Interval Measure
+
+In this section, I investigate the relationships between Ideology measured on a
+five-point scale, and perceptions of the actions as terrorism.
+
+Across all of the models, moving a respondent rightwards along the ideology
+scale is associated with a decrease in their agreement of the actions as
+terrorism, suggesting that more conservative respondents identify the actions
+as less terroristic.  The interactions between ideology and an action being
+conservative are significant and negative, indicating that conservatives are
+much less ready to identify conservative actions as terrorism, and vice versa.
+This is a substantively large effect - one step along the ideology scale
+corresponds to the same difference in perceptions associated with an action
+causing casualties. This fact is even more striking when considering that the
+standard deviation of the ideology measurement 1.49.
+
+```{r ideology_terrorism, results= "asis", echo=F}
+# Measures relationships between ideology and perceptions of actions as
+# terrorism, using an interval-level measure of ideology
+
+ ideo_terrorism1 <- lm(terrorism ~ ideo5, data = data, weights = weight_pol)
+ ideo_terrorism2 <- lm(terrorism ~ ideo5 + conservative_action, data = data, weights = weight_pol)
+ ideo_terrorism3 <- lm(terrorism ~ ideo5 + conservative_action + ideo5:conservative_action, data = data, weights = weight_pol)
+ ideo_terrorism4 <- lm(terrorism ~ ideo5 + conservative_action + ideo5:conservative_action + casualties, data = data, weights = weight_pol)
+ ideo_terrorism5 <- lm(terrorism ~ ideo5 + conservative_action + ideo5:conservative_action + casualties + female, data = data, weights = weight_pol)
+ ideo_terrorism6 <- lm(terrorism ~ ideo5 + conservative_action + ideo5:conservative_action + casualties + female + race, data = data, weights = weight_pol)
+
+stargazer(ideo_terrorism1, ideo_terrorism2, ideo_terrorism3, ideo_terrorism4, ideo_terrorism5, ideo_terrorism6,
+	title="Estimates of Effect of Ideology on Terrorism",
+	dep.var.labels = c("Action is terrorism"),
+	covariate.labels =
+		c("Ideology", "C. Action","Casualties",
+		"Female","Black", "Hispanic","Race --- other",
+		"Ideology $\\times$ C. act.",
+		"Intercept"),
+	df=F,
+	header=F,
+	digits = 2,
+	label="p_terrorism"
+)
+```
+
+## Categorical Measure
+
+In this section, I investigate the relationships between the categorical
+measure of ideology five-point scale, and perceptions of the actions as
+terrorism.
+
+```{r factor_ideology_terrorism, results= "asis", echo=F}
+# Measures relationships between ideology and perceptions of actions as
+# terrorism, using a categorical measure of ideology
+
+ factor_ideo_terrorism1 <- lm(terrorism ~ factor_ideo5, data = data, weights = weight_pol)
+ factor_ideo_terrorism2 <- lm(terrorism ~ factor_ideo5 + conservative_action, data = data, weights = weight_pol)
+ factor_ideo_terrorism3 <- lm(terrorism ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action, data = data, weights = weight_pol)
+ factor_ideo_terrorism4 <- lm(terrorism ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action + casualties, data = data, weights = weight_pol)
+ factor_ideo_terrorism5 <- lm(terrorism ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action + casualties + female, data = data, weights = weight_pol)
+ factor_ideo_terrorism6 <- lm(terrorism ~ factor_ideo5 + conservative_action + factor_ideo5:conservative_action + casualties + female + race, data = data, weights = weight_pol)
+
+stargazer(factor_ideo_terrorism1, factor_ideo_terrorism2, factor_ideo_terrorism3, factor_ideo_terrorism4, factor_ideo_terrorism5, factor_ideo_terrorism6,
+	title="Estimates of Effect of Ideology on Terrorism",
+	dep.var.labels = c("Action is terrorism"),
+	  covariate.labels = c("Conservative", "Liberal","Not Sure",
+		"C. Action", "Casualties",
+	   "Female","Black", "Hispanic","Race --- other",
+	   "Conservative $\\times$ C. Action",
+	   "Liberal $\\times$ C. Action",
+	   "Not Sure $\\times$ C. Action",
+	   "Intercept"),
+	df=F,
+	header=F,
+	digits = 2,
+	label="p_terrorism"
+)
+```
+
+Across all models the coefficient associated with casualties is positive
+indicating that respondents of all groups found actions that resulted in
+casualties to be more terroristic,  *ceritus paribus*.
+
+A positive coefficient for an action being conservative indicates that for
+moderate respondents, an action being conservative was associated with an
+increase in perceptions of it as terrorism, relative to liberal actions.  This
+is a substantively large effect - almost twice the magnitude of the effect
+associated with an action producing casualties.  This suggests that that
+ideology has a very large effect on perceptions of terrorism - the difference
+between how moderates and conservative respondents respond to an action is
+almost twice as large as the average change in response associated with an
+action causing casualties.  Negative interactions between the conservative
+respondent and conservative action terms indicates that relative to moderate
+respondents, conservative respondents found conservative actions to be much
+less terroristic.
+
+Across all models, the interactions between the liberal respondent and
+conservative action terms were insignificant, indicating that liberal
+respondents were not significantly different from moderate respondents in how
+they reacted to conservative actions.
+
+## Effects Graph
+```{r, message=F,echo=F,warn=F}
+data %>%
+	ggplot(aes(x=conservative_action, y=terrorism, group=factor_ideo5, linetype=factor_ideo5)) +
+	geom_smooth(aes(weight=weight_pol), col="black", method="lm") +
+	ggtitle("Interaction Effects of Ideology / Conservative Action on Perceptions\nOf Terroism") +
+	ylab("Perceptions of Terroism \n(Higher Scores Mean More Terroristic)") +
+	xlab("Action type") +
+	scale_x_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
+	labs(linetype = "Respondent ideology") +
+	theme_classic()
+
+ggsave("../charts/parsanship_terrorism.png")
+```
+
+## Effects of Casualties
+```{r, message=F,echo=F}
+data %>%
+	ggplot(aes(x=casualties, y=terrorism, group="hey")) +
+	geom_smooth(aes(weight=weight_pol), col = "black", method="lm") +
+	ggtitle("Relationship between Casualties on Perceptions\nOf Terrorism") +
+	ylab("Terrorism \n(Higher Scores Mean More Terroristic)") +
+	xlab("Action Caused Casualties") +
+	theme_classic()
+
+ggsave("../charts/casualties_terrorism.png")
+```
+
+
+<!---
+## Partisanship on Moral Justifiability
+
+I investigate the relationship of partisanship on perceptions of moral
+justifiability, perceptions of an action as terrorism, and ratings of the
+strategic usefulness of the action. As a note, the reference category for the
+partisan affiliation variable is "affiliated with another party.''
+
+## Partisanship on moral justifiability
+
+Using a linear regression, I differences in identifying the actions as
+justifiable between Republicans, Democrats, independent voters, and respondents
+unsure of their partisanship relative to respondents who identify with another
+party.  The results of this analysis can be seen in \autoref{p_moral_just}
+
+I allow interactions between the effect of partisanship and whether the action
+the respondent was asked about aligns with a traditionally conservative or
+traditionally liberal cause.  This allows for the possibility that
+Democrat-identifying respondents could be more likely to identify actions that
+identify with a Republican/conservative cause as justified, and vice versa.
+
+Across all model specifications, I find no association between a respondent
+identifying as a Republican, Democrat, or Independent and their opinions of the
+actions as justified.  Respondents identifying as unsure of their partisan
+affiliation rate the actions as more justified, across all models.
+
+The interactions between partisan affiliation and the ideological slant of the
+actions are insignificant across all models, indicating that democrats are not
+more likely to view actions in support of traditionally liberal causes as
+justifiable when compared to respondents who identified with a party not
+directly asked about in the survey.  The same can be said with respect to
+Republicans and traditionally republican causes.
+
+```{r, results= "asis", echo=F}
+# Partisanship on Moral Justifiability
+moral_just1 <- lm(moral_just ~ pid3, data = data, weights = weight_pol)
+moral_just2 <- lm(moral_just ~ pid3 + conservative_action, data = data, weights = weight_pol)
+moral_just3 <- lm(moral_just ~ pid3 + conservative_action + pid3:conservative_action, data = data, weights = weight_pol)
+moral_just4 <- lm(moral_just ~ pid3 + conservative_action + pid3:conservative_action + casualties, data = data, weights = weight_pol)
+moral_just5 <- lm(moral_just ~ pid3 + conservative_action + pid3:conservative_action + casualties + female, data = data, weights = weight_pol)
+moral_just6 <- lm(moral_just ~ pid3 + conservative_action + pid3:conservative_action + casualties + female + race, data = data, weights = weight_pol)
+
+
+stargazer(moral_just1, moral_just2, moral_just3, moral_just4, moral_just5, moral_just6,
+    title="Estimates of Effect of Partisanship on Moral Justifiability",
+    dep.var.labels = c("Action is morally justifiable"),
+      covariate.labels =
+          c("Democrat", "Republican","Independent",
+           "Partisanship --- not sure","Conservative action", "Casualties","Female",
+            "Black", "Hispanic", "Race --- other",
+           "Democrat $\\times$ conserv. act.",
+           "Republican $\\times$ conserv. act.",
+           "Independent $\\times$ conserv. act.",
+           "Not sure $\\times$ conserv. act..",
+           "Intercept"),
+	table.placement = "H",
+    df=F,
+	header=F,
+    label = "p_moral_just"
+)
+```
+
+## Effects of Partisanship on Perceptions of Actions as Strategic
+
+In this section I test for differences in identifying actions as strategic
+between Democratic, Republican, and Independent-identifying respondents
+relative to respondents who chose another party.
+
+```{r, results= "asis", echo=F}
+# Partisanship on Strategic
+strategic1 <- lm(strategic ~ pid3, data = data, weights = weight_pol)
+strategic2 <- lm(strategic ~ pid3 + conservative_action, data = data, weights = weight_pol)
+strategic3 <- lm(strategic ~ pid3 + conservative_action + pid3:conservative_action, data = data, weights = weight_pol)
+strategic4 <- lm(strategic ~ pid3 + conservative_action + pid3:conservative_action + casualties, data = data, weights = weight_pol)
+strategic5 <- lm(strategic ~ pid3 + conservative_action + pid3:conservative_action + casualties + female, data = data, weights = weight_pol)
+strategic6 <- lm(strategic ~ pid3 + conservative_action + pid3:conservative_action + casualties + female + race, data = data, weights = weight_pol)
+
+stargazer(strategic1, strategic2, strategic3, strategic4,strategic5,strategic6,
+    title="Estimates of Effect of Partisanship on Strategic",
+    dep.var.labels = c("Action is strategic"),
+      covariate.labels =
+          c("Democrat", "Republican","Independent",
+           "Partisanship --- not sure","Conservative action", "Casualties","Female",
+            "Black", "Hispanic", "Race --- other",
+           "Democrat $\\times$ conserv. act.",
+           "Republican $\\times$ conserv. act.",
+           "Independent $\\times$ conserv. act.",
+           "Not sure $\\times$ conserv. act..",
+           "Intercept"),
+	table.placement = "H",
+    df=F,
+	header=F,
+    label="p_strategic"
+)
+```
+
+Across all models, there is a significant negative relationship between a
+respondent identifying as a Republican, Democrat, or independent.  This means
+that respondents identifying with these parties tended
+to rate the actions as less strategic than respondents who identified with
+another party, even when controlling for the effects of race and gender.
+
+Once again, I allow for interactions between the ideological slant of an action
+and the effects of partisanship, finding no significant association.  This
+means that the models do not predict any difference between Republicans /
+Democrats responding to a traditionally conservative / liberal action when
+compared to respondents who identify with another party.
+
+The relationship between casualties and perceptions of the actions as strategic
+is uniformly negative across all models.  As the presence of casualties was
+fully randomized, we can conclude that the presence of casualties directly
+results in respondents rating the action as less strategic.
+
+## Partisanship on Perception of Actions as Terrorism
+
+In this section I test for differences in identifying actions as terrorism
+between Democratic, Republican, and Independent-identifying respondents
+relative to respondents who chose another party.
+
+
+```{r, results= "asis", echo=F}
+# Partisanship on Terrorism
+terrorism1 <- lm(terrorism ~ pid3, data = data, weights = weight_pol)
+terrorism2 <- lm(terrorism ~ pid3 + conservative_action, data = data, weights = weight_pol)
+terrorism3 <- lm(terrorism ~ pid3 + conservative_action + pid3:conservative_action, data = data, weights = weight_pol)
+terrorism4 <- lm(terrorism ~ pid3 + conservative_action + pid3:conservative_action + casualties, data = data, weights = weight_pol)
+terrorism5 <- lm(terrorism ~ pid3 + conservative_action + pid3:conservative_action + casualties + female, data = data, weights = weight_pol)
+terrorism6 <- lm(terrorism ~ pid3 + conservative_action + pid3:conservative_action + casualties + female + race, data = data, weights = weight_pol)
+
+stargazer(terrorism1, terrorism2, terrorism3, terrorism4, terrorism5, terrorism6,
+    title="Estimates of Effect of Partisanship on Terrorism",
+    dep.var.labels = c("Action is terrorism"),
+      covariate.labels =
+          c("Democrat", "Republican","Independent",
+           "Partisanship --- not sure","Conservative action", "Casualties","Female",
+            "Black", "Hispanic", "Race --- other",
+           "Democrat $\\times$ conserv. act.",
+           "Republican $\\times$ conserv. act.",
+           "Independent $\\times$ conserv. act.",
+           "Not sure $\\times$ conserv. act..",
+           "Intercept"),
+    df=F,
+	table.placement = "H",
+	header=F,
+    label="p_terrorism"
+)
+```
+
+Across all models, there is a significant positive relationship between
+respondents identifying as Democrats, and their rating the actions as
+terrorism. This suggests that all else equal, Democratic respondents rated the
+actions as terrorism more than those in the reference category, respondents who
+identified as affiliated with a party not surveyed.
+
+--->
+
