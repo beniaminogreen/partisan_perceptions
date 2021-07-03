@@ -1,7 +1,7 @@
 report.pdf: report.Rmd data/models.Rdata
 	R -e "require(rmarkdown); render('report.Rmd')"
 
-data/models.Rdata: scripts/estimate_models.R
+data/models.Rdata: scripts/estimate_models.R data/*
 	R CMD BATCH scripts/estimate_models.R
 
 clean:

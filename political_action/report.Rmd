@@ -15,7 +15,7 @@ library(stargazer)
 # This section loads the data from the original survey and recodes and
 # transforms the variables into the ones used in the paper
 
-data <- read_csv("../data/original_yougov.csv") %>%
+data <- read_csv("data/original_yougov.csv") %>%
   rename(moral_just = ucl_1_1, strategic = ucl_1_2, terrorism = ucl_1_3) %>%
   mutate(
   casualties = experiment_split %in% c(2,4,6,8,10,12),
@@ -304,7 +304,7 @@ data %>%
 	labs(linetype = "Respondent ideology") +
 	theme_classic()
 
-ggsave("../charts/partisanship_justification.png")
+ggsave("charts/partisanship_justification.png")
 
 ```
 
@@ -318,7 +318,7 @@ data %>%
 	xlab("Action Caused Casualties") +
 	theme_classic()
 
-ggsave("../charts/casualties_justification.png")
+ggsave("charts/casualties_justification.png")
 ```
 
 
@@ -425,7 +425,7 @@ data %>%
 	labs(linetype = "Respondent ideology") +
 	theme_classic()
 
-ggsave("../charts/partisanship_strategy.png")
+ggsave("charts/partisanship_strategy.png")
 ```
 
 ## Effects of Casualties
@@ -438,7 +438,7 @@ data %>%
 	xlab("Action Caused Casualties") +
 	theme_classic()
 
-ggsave("../charts/casualties_strategy.png")
+ggsave("charts/casualties_strategy.png")
 ```
 
 # Ideology on Perceptions of Actions as Terrorism
@@ -553,7 +553,7 @@ data %>%
 	labs(linetype = "Respondent ideology") +
 	theme_classic()
 
-ggsave("../charts/parsanship_terrorism.png")
+ggsave("charts/parsanship_terrorism.png")
 ```
 
 ## Effects of Casualties
@@ -566,7 +566,7 @@ data %>%
 	xlab("Action Caused Casualties") +
 	theme_classic()
 
-ggsave("../charts/casualties_terrorism.png")
+ggsave("charts/casualties_terrorism.png")
 ```
 
 
