@@ -1,0 +1,107 @@
+
+R version 4.1.0 (2021-05-18) -- "Camp Pontanezen"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library("tidyverse")
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ ggplot2 3.3.4     ✔ purrr   0.3.4
+✔ tibble  3.1.2     ✔ dplyr   1.0.7
+✔ tidyr   1.1.3     ✔ stringr 1.4.0
+✔ readr   1.4.0     ✔ forcats 0.5.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+> library("haven")
+> library("lubridate")
+
+Attaching package: ‘lubridate’
+
+The following objects are masked from ‘package:base’:
+
+    date, intersect, setdiff, union
+
+> library("broom")
+> 
+> data <- read_spss("../data/UCL_Palestine_US_client.sav")
+> 
+> data2 <- data %>%
++   mutate(
++     # Attentiveness Variables
++     time_spent = starttime %--% endtime,
++     seconds_spent = time_spent / dseconds(1),
++     # female_variable
++     female = gender == 2,
++     ideo5_dbl = na_if(ideo5, 6) - 3
++   ) %>%
++   # Mutating labelled double responses to character
++   mutate_at(
++     c(
++       "race", "educ", "ideo5", "pid3", "profile_gross_household",
++       "profile_gross_household_r", "marital_stat", "presvote20post", "region"
++     ),
++     ~ .x %>%
++       as_factor() %>%
++       as.character()
++   ) %>%
++   mutate_at(c("UCL_1", "UCL_2", "UCL_3"), ~ 4 - as.numeric(.x)) %>%
++   mutate(
++     UCLsplit2 = UCLsplit2 %>%
++       dplyr::recode(
++         `1` = "Control",
++         `2` = "National security",
++         `3` = "Prevent humanitarian crisis",
++         `4` = "Uphold international law",
++         `5` = "Counter racial injustice"
++       ),
++     presvote20post = presvote20post %>%
++         dplyr::recode(
++         "Howie Hawkins" = "Other",
++         "Jo Jorgensen" = "Other"
++                       )
++   ) %>%
++   rename(
++     treat = UCLsplit2,
++     support = UCL_1,
++     american_interests = UCL_2,
++     american_values = UCL_3
++   )
+> 
+> outcome_pca <- data2 %>%
++   select(support, american_values, american_interests) %>%
++   prcomp()
+> 
+> data2 <- outcome_pca %>%
++   augment(data2)
+> 
+> # Check no observations were lost
+> stopifnot(nrow(data) == nrow(data2))
+> 
+> attentive <- data2 %>%
++   filter(seconds_spent > 10, seconds_spent < 300)
+> 
+> # check that pruning was performed
+> stopifnot(nrow(attentive) < nrow(data2))
+> 
+> cleaned_data <- data2
+> 
+> save(cleaned_data,outcome_pca, attentive, file = "../data/cleaned_data.Rdata")
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  1.284   0.048   1.319 

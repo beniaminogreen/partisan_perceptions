@@ -1,0 +1,43 @@
+---
+title: This Article Looks Quite Authoritative
+author: Author Name
+output: pdf_document
+urlcolor: blue
+---
+
+```{r load_libraries, echo=F, include=F}
+# This code loads the libraries used in the analysis into memory
+library(tidyverse)
+library(stargazer)
+```
+
+```{r load_data, echo=F, include=F}
+load("data/cleaned_data.Rdata")
+```
+
+# PCA
+
+```{r, results="asis", echo=F}
+
+rownames(pca$rotation) <- c("I would support Congress adressing this issue",
+                   "These issues are important to American society",
+                   "These issues are important to me")
+
+
+pca$rotation %>%
+    data.frame() %>%
+    stargazer(summary=F, title="Prinicipal Component Loadings", header=F)
+
+```
+
+
+```{r, results="asis", echo=F}
+cleaned_data %>%
+    filter(seconds_spent < 10*60) %>%
+    select(seconds_spent) %>%
+    data.frame() %>%
+    stargazer(header=F, title="Summary Statistics: Seconds spent on the survey")
+```
+
+
+

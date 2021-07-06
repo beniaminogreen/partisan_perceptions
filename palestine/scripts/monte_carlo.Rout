@@ -1,0 +1,85 @@
+
+R version 4.1.0 (2021-05-18) -- "Camp Pontanezen"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(tidyverse)
+── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+✔ ggplot2 3.3.4     ✔ purrr   0.3.4
+✔ tibble  3.1.2     ✔ dplyr   1.0.7
+✔ tidyr   1.1.3     ✔ stringr 1.4.0
+✔ readr   1.4.0     ✔ forcats 0.5.1
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+> library(broom)
+> 
+> power_sims <- function(std, N, difference) {
++   trump_vote <- sample(c(FALSE, FALSE, TRUE), N, replace = T)
++   treatment <- sample(1:6, N, replace = T)
++   outcome <- rnorm(N, 0, std) + ifelse(trump_vote & treatment == 6, difference, 0)
++ 
++   data <- tibble(trump_vote, treatment, outcome)
++ 
++   model <- lm(outcome ~ trump_vote * as.factor(treatment))
++ 
++   return(tidy(model)[12, ] %>% select(-term))
++ }
+> 
+> 
+> sims <- expand_grid(effect_size = seq(0, .9, .05), sim_n = 1:500) %>%
++   mutate(data = map(effect_size, ~ power_sims(2, 3816, .x))) %>%
++   unnest() %>%
++   nest(-effect_size) %>%
++   mutate(
++     prop_significant = map_dbl(data, ~ mean(.x$p.value < .05)),
++     significant_sims = map(data, ~ .x %>% filter(p.value < .05)),
++     prop_negative = map_dbl(significant_sims, ~ mean(.x$estimate < 0)),
++     exaggeration_factor = map2_dbl(significant_sims, effect_size, ~ mean(abs(.x$estimate)) / .y)
++   )
+Warning messages:
+1: `cols` is now required when using unnest().
+Please use `cols = c(data)` 
+2: All elements of `...` must be named.
+Did you want `data = c(sim_n, estimate, std.error, statistic, p.value)`? 
+> 
+> sample_size_sims <- expand_grid(sample_size = seq(400,30000,500), sim_n = 1:500) %>%
++   mutate(data = map(sample_size, ~ power_sims(2, .x, .3))) %>%
++   unnest()
+Warning message:
+`cols` is now required when using unnest().
+Please use `cols = c(data)` 
+> 
+> sample_size_sims <- sample_size_sims %>%
++     nest(-sample_size) %>%
++     mutate(
++         prop_significant = map_dbl(data, ~ mean(.x$p.value < .05)),
++     ) %>%
++     select(-data)
+Warning message:
+All elements of `...` must be named.
+Did you want `data = c(sim_n, estimate, std.error, statistic, p.value)`? 
+> 
+> 
+> rep_sims <- sims %>% select(-significant_sims, -data)
+> 
+> save(rep_sims, sample_size_sims, file = "../data/monte_carlo_results.Rdata")
+> 
+> 
+> proc.time()
+   user  system elapsed 
+728.637   6.670 736.223 

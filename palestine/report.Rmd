@@ -1,9 +1,45 @@
 ---
-title: This Article Looks Quite Authoritative
-author: Author Name
+title: Analysis for Palestine Experiment
+author: Beniamino Green
 output: pdf_document
 urlcolor: blue
 ---
+
+# Introduction
+
+In this document I describe the analysis I have run on the YouGov survey
+investigating the effects of framing on support for assistance for the
+Palestinian Authority.
+
+The survey asked respondents to read the following passage:
+
+> "US Secretary of State Antony Blinken visited Israel-Palestine last month after
+> an 11-day escalation of violence.  After meeting with Palestinian leaders,
+> Blinken announced that the US would increase assistance to the Palestinian
+> Authority."
+
+Respondents were also randomly shown one of the following sentences at the end
+of the passage:
+
+* No ending sentence (control condition)
+* "A State Department official stated that increasing US assistance to
+Palestinians will 'help protect American national security interests in the
+region.” (National security treatment)
+* "A State Department official stated that increasing US assistance to
+Palestinians will 'help prevent another humanitarian crisis and civilian
+suffering in the region.” (Humanitarian crisis treatment)
+* "A State Department official stated that increasing US assistance to
+Palestinians will 'help preserve the principles of international law in the
+region.” (International law treatment)
+* "A State Department official stated that increasing US assistance to
+Palestinians will 'help counter racial injustice and oppression in the region.” (Racial justice)
+
+
+Respondents were then asked to respond to the following three statements on a scale of strongly agree to strongly disagree.
+
+* I would support this foreign policy decision.
+* This foreign policy decision is good for American interests.
+* This foreign policy decision reflects American values.
 
 ```{r load_libraries, echo=F, include=F}
 # This code loads the libraries used in the analysis into memory
@@ -12,6 +48,120 @@ library(stargazer)
 ```
 
 ```{r load_data, echo=F, include=F}
+load("data/cleaned_data.Rdata")
 load("data/models.Rdata")
+
 ```
 
+# Measurement / Preliminaries
+
+In this section I describe the scaling processing I perform on the data prior
+to running the data analysis.
+
+## Assessing the Attentive
+
+A subset of respondents may not be reading the vignettes before answering as 20
+percent of respondents read the vignettes and respond to all three questions in
+under 20 seconds. A subset of respondents not reading the treatments would bias
+effects towards zero those who do not read the vignettes cannot be influenced
+by the treatment, diminishing the power of the experiment and increase the
+chances of finding false positives.  To compensate for this, I test all
+findings are consistent when analyzing the respondents of both all respondents
+and attentive respondents, which I define as respondents who took more than 10
+seconds to answer the survey.
+
+```{r, results="asis", echo=F}
+cleaned_data %>%
+    filter(seconds_spent < 10*60) %>%
+    select(seconds_spent) %>%
+    data.frame() %>%
+    stargazer(header=F, title="Summary Statistics: seconds spent on the survey")
+```
+
+## PCA
+
+I create a set of composite outcomes using PCA which summarize responses to the
+three measures. The loadings for each principal component can be seen below.
+
+```{r, results='asis', echo=F}
+# Create plot of PCA Loadings
+
+rownames(outcome_pca$rotation) <- c("I support this decision",
+                                    "This policy reflects American Values",
+                                    "This is good for American interests")
+outcome_pca$rotation %>%
+    data.frame() %>%
+    stargazer(summary=F, title="Prinicipal Component Loadings", header=F)
+
+```
+
+The first principal component explains 89% of the variance meaning that it well
+explains almost all of the variation in the data.  PC1 is strongly negatively
+corrected with all three answers, suggesting that it encodes a respondent's
+general support / enthusiasm for the policy decision.
+
+# PCA measures across all treatments
+
+First, I analyze the effects of the different treatments on the first principal
+component. The treatment effects are all insignificant except for upholding
+international law, sugeesting that respondents on average were not moved much
+by the adding of a framing apart from international law. The coefficient for
+international law is positive, suggesting that respondents were significantly
+less supportive for actions taken to uphold international law than other
+actions.
+
+```{r, results = "asis", echo=F}
+stargazer(pca_all, pca_att, header=F,
+          title = "principal component (negative = enthusiastic) on treatment",
+          column.labels=c("All respondents", "Attentive respondents"),
+          dep.var.labels= "principal component 1",
+          covariate.labels = c(
+                               "Counter racial injustice",
+                               "National security",
+                               "Prevent humanitarian crisis",
+                               "Uphold international law",
+                               "Intercept"
+                              )
+)
+```
+
+I now investiagate the effects of framings on support for aid to Palestine including the effect of respondent ideology. The coefficient for respondent ideology is significant and positive, suggesting that liberal respondents were more enthusiastic about aid to palestine than conservative respondents.
+
+```{r, results = "asis", echo=F}
+
+stargazer(pca_treat_ideo5_dbl, pca_treat_ideo5_dbl_att, header=F,
+          title = "principal component (negative = enthusiastic) on treatment",
+          column.labels=c("all respondents", "attentive respondents"),
+          dep.var.labels= "principal component 1",
+          covariate.labels = c(
+                               "Counter racial justice",
+                               "National security",
+                               "Prevent humanitarian crisis",
+                               "Counter racial injustice",
+                               "Ideology",
+                               "Intercept"
+                              )
+)
+```
+
+
+```{r, echo=F}
+
+load("data/monte_carlo_results.Rdata")
+
+rep_sims %>%
+    pivot_longer(c(prop_significant, prop_negative,
+                   exaggeration_factor),names_to="statistic") %>%
+    ggplot(aes(x=effect_size, y=value, col=statistic)) +
+    geom_line() +
+    facet_wrap(~statistic, scales="free") +
+    ggtitle("Replipicability Measures by Effect Size") +
+    theme(legend.position = "none") +
+    geom_vline(xintercept = .4, linetype=2, col="grey")
+
+sample_size_sims %>%
+    ggplot(aes(x=sample_size, y=prop_significant)) +
+    geom_line() +
+    geom_hline(yintercept=.8, linetype=2, color="grey")
+
+```
