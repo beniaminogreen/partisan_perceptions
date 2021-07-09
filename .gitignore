@@ -11,5 +11,6 @@
 *.spl
 *.tex
 *.tex
+*.lock
 env/
 readings/
