@@ -60,8 +60,7 @@ pca <- prcomp(data2 %>% select(
 ))
 
 data2 <- pca %>%
-  augment(data2) %>%
-  mutate(.fittedPC1 = -1 * .fittedPC1)
+  augment(data2)
 
 attentive <- data2 %>%
   filter(seconds_spent > 5, seconds_spent < 300)

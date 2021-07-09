@@ -55,9 +55,6 @@ load("data/models.Rdata")
 
 # Measurement / Preliminaries
 
-In this section I describe the scaling processing I perform on the data prior
-to running the data analysis.
-
 ## Assessing the Attentive
 
 A subset of respondents may not be reading the vignettes before answering as 20
@@ -100,21 +97,27 @@ explains almost all of the variation in the data.  PC1 is strongly negatively
 corrected with all three answers, suggesting that it encodes a respondent's
 general support / enthusiasm for the policy decision.
 
-# PCA measures across all treatments
+# Analysis and Results
 
-First, I analyze the effects of the different treatments on the first principal
-component. The treatment effects are all insignificant except for upholding
-international law, sugeesting that respondents on average were not moved much
-by the adding of a framing apart from international law. The coefficient for
-international law is positive, suggesting that respondents were significantly
-less supportive for actions taken to uphold international law than other
-actions.
+First, I analyze the effects of the different framings on suport for the
+intervention as measured by the three questions. There are no differences in
+support between treated and control respondents for all treatments except
+uphold international law. Respondents who are told that the increased aid would
+help uphold international law are uniformly less likely to identify the action
+as consistent with American values or interests. Respondents exposed to the
+international law framing also give responses that correspond to high PC1
+values, indicating that this framing makes respondents in aggregate less likely
+to support intervention.
+
+I summarize these results with representative models describing the
+relationship between the framing and support as measured by the first
+principal component below.
 
 ```{r, results = "asis", echo=F}
 stargazer(pca_all, pca_att, header=F,
           title = "principal component (negative = enthusiastic) on treatment",
           column.labels=c("All respondents", "Attentive respondents"),
-          dep.var.labels= "principal component 1",
+          dep.var.labels= "Principal Component 1",
           covariate.labels = c(
                                "Counter racial injustice",
                                "National security",
@@ -125,25 +128,41 @@ stargazer(pca_all, pca_att, header=F,
 )
 ```
 
-I now investiagate the effects of framings on support for aid to Palestine including the effect of respondent ideology. The coefficient for respondent ideology is significant and positive, suggesting that liberal respondents were more enthusiastic about aid to palestine than conservative respondents.
+I now investigate the effects of framings on support for aid to Palestine
+including the effect of respondent ideology. I run models regressing support as
+measured by each survey question, and by the principal component. Across all
+models, changing a respondent's ideology to be more liberal predicts a
+significant increase in their support for intervention. Representative models
+run on the principal component outcome can be seen below.
 
 ```{r, results = "asis", echo=F}
 
 stargazer(pca_treat_ideo5_dbl, pca_treat_ideo5_dbl_att, header=F,
           title = "principal component (negative = enthusiastic) on treatment",
-          column.labels=c("all respondents", "attentive respondents"),
-          dep.var.labels= "principal component 1",
+          column.labels=c("All respondents", "Attentive respondents"),
+          dep.var.labels= "Principal Component 1",
           covariate.labels = c(
-                               "Counter racial justice",
+                               "Counter racial injustice",
                                "National security",
                                "Prevent humanitarian crisis",
-                               "Counter racial injustice",
+                               "Uphold international law",
                                "Ideology",
                                "Intercept"
                               )
 )
 ```
 
+I then run models investigating whether there is an interaction between
+ideology and the effect the treatments have on support. Put simply: "Do the
+framings affect support differently among liberals and conservatives?" I
+estimate models including an interaction between ideology, party, and past
+voting behavior and the treatment finding no effect. However, it is an open
+question as to whether this lack of an effect is due to a lack of statistical
+power or the the absence of an effect.
+
+Simulations using random data (results below) suggest that this survey design
+would not be able to detect the largest interaction effect of .4, the largest
+effect observed in the first YouGov survey.
 
 ```{r, echo=F}
 
@@ -157,11 +176,16 @@ rep_sims %>%
     facet_wrap(~statistic, scales="free") +
     ggtitle("Replipicability Measures by Effect Size") +
     theme(legend.position = "none") +
-    geom_vline(xintercept = .4, linetype=2, col="grey")
+    geom_vline(xintercept = .4, linetype=2, col="grey") +
+    xlab("Effect Size") +
+    ylab("Value")
 
 sample_size_sims %>%
     ggplot(aes(x=sample_size, y=prop_significant)) +
     geom_line() +
-    geom_hline(yintercept=.8, linetype=2, color="grey")
+    geom_hline(yintercept=.8, linetype=2, color="grey") +
+    ggtitle("Power to Detect Interaction Effect by Sample Size") +
+    xlab("Sample Size") +
+    ylab("Statistical Power")
 
 ```

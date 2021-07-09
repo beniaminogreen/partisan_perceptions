@@ -1,9 +1,10 @@
-load("../data/cleaned_data.Rdata")
 library(tidyverse)
 
 load("../data/cleaned_data.Rdata")
 
 p_import_woke <- lm(personally_imporant ~ woke, data = cleaned_data, weights=weight_1)
+
+p_import_woke <- lm(personally_imporant ~ treat, data = cleaned_data, weights=weight_1)
 
 # Estimate woke on support on measures of support
 p_import_woke <- lm(personally_imporant ~ woke, data = cleaned_data, weights=weight_1)
@@ -60,6 +61,8 @@ pca_woke_x_pvote_att <- lm(.fittedPC1 ~ woke*presvote20post, data = attentive, w
 
 # estimate woke x party id on measures of support
 
+
+
 p_import_woke_x_pid3 <- lm(personally_imporant ~ woke*pid3, data = cleaned_data, weights=weight_1)
 p_import_woke_x_pid3_att <- lm(personally_imporant ~ woke*pid3, data = attentive, weights=weight_1)
 
@@ -72,4 +75,18 @@ support_woke_x_pid3_att <- lm(support ~ woke*pid3, data = attentive, weights=wei
 pca_woke_x_pid3 <- lm(.fittedPC1 ~ woke*pid3, data = cleaned_data, weights=weight_1)
 pca_woke_x_pid3_att <- lm(.fittedPC1 ~ woke*pid3, data = attentive, weights=weight_1)
 
-save(pca_treat, file="../data/estimated_models.Rdata")
+
+save(p_import_woke, p_import_woke, p_import_woke_att, n_import_woke,
+     n_import_woke_att, support_woke, support_woke_att, pca_woke, pca_woke_att,
+     p_import_treat, p_import_treat_att, n_import_treat, n_import_treat_att,
+     support_treat, support_treat_att, pca_treat, pca_treat_att,
+     p_import_woke_x_ideo5_dbl, p_import_woke_x_ideo5_dbl_att,
+     n_import_woke_x_ideo5_dbl, n_import_woke_x_ideo5_dbl_att,
+     support_woke_x_ideo5_dbl, support_woke_x_ideo5_dbl_att,
+     pca_woke_x_ideo5_dbl, pca_woke_x_ideo5_dbl_att, p_import_woke_x_pvote,
+     p_import_woke_x_pvote_att, n_import_woke_x_pvote,
+     n_import_woke_x_pvote_att, support_woke_x_pvote, support_woke_x_pvote_att,
+     pca_woke_x_pvote, pca_woke_x_pvote_att, p_import_woke_x_pid3,
+     p_import_woke_x_pid3_att, n_import_woke_x_pid3, n_import_woke_x_pid3_att,
+     support_woke_x_pid3, support_woke_x_pid3_att, pca_woke_x_pid3,
+     pca_woke_x_pid3_att, file = "../data/estimated_models.Rdata")

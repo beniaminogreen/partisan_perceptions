@@ -1,5 +1,5 @@
 ---
-title: This Article Looks Quite Authoritative
+title: YouGov Survey Data Analysis
 author: Author Name
 output: pdf_document
 urlcolor: blue
@@ -11,12 +11,54 @@ library(tidyverse)
 library(stargazer)
 ```
 
-```{r load_data, echo=F, include=F}
-load("data/cleaned_data.Rdata")
+# Introduction
+
+In this document, I describe the analysis I have run on the YouGov survey
+investigating the effects of "woke" framings on support for congressional action on an a set of issues.
+
+Respondents to the survey were shown one of the following 6 statements:
+
+* Congress is negotiating a bill to address issues raised by Latinx communities.
+* Congress is negotiating a bill to address issues raised by Hispanic/Latino communities.
+* Congress is negotiating a bill to address issues raised by communities of color.
+* Congress is negotiating a bill to address issues raised by racial minorities.
+* Congress is negotiating a bill to address issues raised by the Black Lives Matter movement.
+* Congress is negotiating a bill to address issues raised by recent protests for racial equality.
+
+Respondents were then asked to respond to the following three statements on a scale of "strongly disagree" to "strongly agree."
+
+1. I would support Congress passing a bill to address these issues.
+2. These issues are important to me.
+3. These issues are important for American society.
+
+
+## Preliminaries:
+
+As was the case with the Palestine survey, a subset of respondents appear to
+not be reading the vignettes / questions before they respond. This would
+decrease the observable treatment effect, and make it more likely that a
+significant result is due to chance alone. I run all models discussed in this
+analysis on all respondents, and on the subset of respondents who took more
+than 10 seconds to respond to the survey, to ensure that the results are not
+dependent on the inclusion of respondents who were not exposed to the
+treatment.
+
+```{r, results="asis", echo=F}
+cleaned_data %>%
+    filter(seconds_spent < 10*60) %>%
+    select(seconds_spent) %>%
+    data.frame() %>%
+    stargazer(header=F, title="Summary Statistics: Seconds spent on the survey")
 ```
 
-# PCA
+```{r load_data, echo=F, include=F}
+load("data/cleaned_data.Rdata")
+load("data/estimated_models.Rdata")
+```
 
+I create a set of principal components which summarize responses to the three measures. The loadings for these components can be seen below:
+
+# PCA
 ```{r, results="asis", echo=F}
 
 rownames(pca$rotation) <- c("I would support Congress adressing this issue",
@@ -30,14 +72,55 @@ pca$rotation %>%
 
 ```
 
+The first principal component explains roughly 90% of the variance responses to
+the question, suggesting that it well explains most of the variation in the
+data. It is strongly negatively correlated with responses to all three
+questions suggesting that it encodes a respondent's general support for the
+proposed congressional action, where more positive values indicate respondents
+that are less enthusiastic about the bill.
+
+# Analysis
+
+
+I first analyze the effects of changing a framing from "non-woke" to "woke"
+across all respondents. The coefficient for "woke" is uniformly negative among
+both all and attentive respondents. This suggests that changing the framing of
+an issue from "non-woke" to "woke" is associated with a significant decrease in
+support. This effect can also be seen when examining responses to the three
+questions individually. Across all questions, changing a framing from
+"non-woke" to "woke" significantly decreases support and perceptions of the
+bill as important.
 
 ```{r, results="asis", echo=F}
-cleaned_data %>%
-    filter(seconds_spent < 10*60) %>%
-    select(seconds_spent) %>%
-    data.frame() %>%
-    stargazer(header=F, title="Summary Statistics: Seconds spent on the survey")
+stargazer(pca_woke, pca_woke_att,
+          title = "principal component (negative = supportive) on woke framing",
+          dep.var.labels= "Principal Component 1",
+          covariate.labels = c("Woke", "Intercept"),
+          header=F)
 ```
 
+I then include an effect for a respondent's ideology, and allow the effect of
+"woke" framings to vary between respondents of different ideologies. A
+significant positive coefficient for a respondents' ideology indicates that
+liberal respondents view all congressional actions more favorably. The
+coefficient for the interaction between woke and a respondents' ideology is
+positive, but not significant at conventional levels (p<.1), suggesting that
+liberal respondents may respond more positively to woke framings, but the
+evidence is ambivalent.
 
+```{r results="asis", echo=F}
+stargazer(pca_woke_x_ideo5_dbl, pca_woke_x_ideo5_dbl_att,
+          header = F,
+          title = "principal component (negative = supportive) on woke framing",
+          dep.var.labels= "Principal Component 1",
+          covariate.labels = c("Woke","Ideology","Woke X Ideology", "Intercept")
 
+)
+```
+
+Similar to the results from the Palestine survey experiment, interactions
+between treatment and respondents' ideology and past voting are not significant
+at conventional significance levels. This result is consistent across all
+measures of ideology and party affiliation, indicating that a respondents'
+party, ideology, and past voting had no effect on how they responded to a
+framing being "woke" or not.
