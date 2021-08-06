@@ -34,6 +34,11 @@ Respondents were then asked to respond to the following three statements on a sc
 
 ## Preliminaries:
 
+```{r load_data, echo=F, include=F}
+load("data/cleaned_data.Rdata")
+load("data/estimated_models.Rdata")
+```
+
 As was the case with the Palestine survey, a subset of respondents appear to
 not be reading the vignettes / questions before they respond. This would
 decrease the observable treatment effect, and make it more likely that a
@@ -44,6 +49,8 @@ dependent on the inclusion of respondents who were not exposed to the
 treatment.
 
 ```{r, results="asis", echo=F}
+
+
 cleaned_data %>%
     filter(seconds_spent < 10*60) %>%
     select(seconds_spent) %>%
@@ -51,68 +58,68 @@ cleaned_data %>%
     stargazer(header=F, title="Summary Statistics: Seconds spent on the survey")
 ```
 
-```{r load_data, echo=F, include=F}
-load("data/cleaned_data.Rdata")
-load("data/estimated_models.Rdata")
-```
 
-I create a set of principal components which summarize responses to the three measures. The loadings for these components can be seen below:
-
-# PCA
-```{r, results="asis", echo=F}
-
-rownames(pca$rotation) <- c("I would support Congress adressing this issue",
-                   "These issues are important to American society",
-                   "These issues are important to me")
-
-
-pca$rotation %>%
-    data.frame() %>%
-    stargazer(summary=F, title="Prinicipal Component Loadings", header=F)
-
-```
-
-The first principal component explains roughly 90% of the variance responses to
-the question, suggesting that it well explains most of the variation in the
-data. It is strongly negatively correlated with responses to all three
-questions suggesting that it encodes a respondent's general support for the
-proposed congressional action, where more positive values indicate respondents
-that are less enthusiastic about the bill.
 
 # Analysis
-
 
 I first analyze the effects of changing a framing from "non-woke" to "woke"
 across all respondents. The coefficient for "woke" is uniformly negative among
 both all and attentive respondents. This suggests that changing the framing of
 an issue from "non-woke" to "woke" is associated with a significant decrease in
-support. This effect can also be seen when examining responses to the three
-questions individually. Across all questions, changing a framing from
-"non-woke" to "woke" significantly decreases support and perceptions of the
-bill as important.
+support across all questions. This effect is also present when examining
+responses to the three questions individually. Across all questions, changing a
+framing from "non-woke" to "woke" significantly decreases support and
+perceptions of the bill as important.
 
 ```{r, results="asis", echo=F}
-stargazer(pca_woke, pca_woke_att,
-          title = "principal component (negative = supportive) on woke framing",
-          dep.var.labels= "Principal Component 1",
+cat("\\setcounter{table}{0}")
+
+stargazer(sum_woke, sum_woke_att,
+          title = "Sum of answers of questions on woke framing",
+          dep.var.labels= "Sum of Answers",
           covariate.labels = c("Woke", "Intercept"),
           header=F)
 ```
 
+I also display this information in a boxplot, showing the sum of answers to the
+survey questions for respondents exposed to the woke and non-woke framings.
+
+```{r, include=TRUE, echo=FALSE, message=F}
+
+library(ggsignif)
+library(tidyverse)
+
+cleaned_data %>%
+    mutate(woke = ifelse(woke, "Woke", "Non-woke")) %>%
+    ggplot(aes(x=woke, y=sum)) +
+    geom_boxplot() +
+    geom_signif(comparisons = list(c("Woke", "Non-woke")),
+                test="t.test",
+                map_signif_level = TRUE) +
+    ggtitle("Average Support by framing") +
+    xlab("Woke / non woke framing") +
+    ylab("Sum of responses to 3 questions") +
+    theme_bw() +
+    coord_cartesian(ylim = c(-1, 10))
+
+```
+
 I then include an effect for a respondent's ideology, and allow the effect of
-"woke" framings to vary between respondents of different ideologies. A
-significant positive coefficient for a respondents' ideology indicates that
+"woke" framing to vary between respondents of different ideologies. A
+significant negative coefficient for a respondents' ideology indicates that
 liberal respondents view all congressional actions more favorably. The
 coefficient for the interaction between woke and a respondents' ideology is
 positive, but not significant at conventional levels (p<.1), suggesting that
-liberal respondents may respond more positively to woke framings, but the
+liberal respondents may respond more positively to woke framing, but the
 evidence is ambivalent.
 
 ```{r results="asis", echo=F}
-stargazer(pca_woke_x_ideo5_dbl, pca_woke_x_ideo5_dbl_att,
+
+
+stargazer(sum_woke_x_ideo5_dbl, sum_woke_x_ideo5_dbl_att,
           header = F,
-          title = "principal component (negative = supportive) on woke framing",
-          dep.var.labels= "Principal Component 1",
+          title = "Sum of responses to survey questions on woke framing",
+          dep.var.labels= "Sum of Responses",
           covariate.labels = c("Woke","Ideology","Woke X Ideology", "Intercept")
 
 )
@@ -124,3 +131,4 @@ at conventional significance levels. This result is consistent across all
 measures of ideology and party affiliation, indicating that a respondents'
 party, ideology, and past voting had no effect on how they responded to a
 framing being "woke" or not.
+

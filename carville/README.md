@@ -1,0 +1,26 @@
+# Replication Materials Repository
+
+Welcome to the repository of replication materials.  Please follow the steps
+below if you are interested in re-running the code used to generate the paper
+using Docker.
+
+## Replication With Docker
+Using either git in the command line, or the download button above, clone this repository and navigate into it.
+
+Then, depending on your system, run the following commands.
+
+### Using Linux / Mac / Windows Power Shell:
+```
+docker build -t replication .
+docker run --rm -v ${PWD}:/opt/report replication
+```
+### Using Windows Command Line:
+```
+docker build -t replication .
+docker run --rm -v  %cd%:/opt/report replication
+```
+The first command could take around 5 minutes as installing the necessary R packages is slow.
+The next command should run in under 2 minutes.
+Once both have run, you should find a newly-generated copy of the report, ```report.pdf``` in the root directory.
+
+Hope you enjoy!

@@ -1,9 +1,11 @@
 library(tidyverse)
 
+sessionInfo()
+
+
 load("../data/cleaned_data.Rdata")
 
 p_import_woke <- lm(personally_imporant ~ woke, data = cleaned_data, weights=weight_1)
-
 p_import_woke <- lm(personally_imporant ~ treat, data = cleaned_data, weights=weight_1)
 
 # Estimate woke on support on measures of support
@@ -75,6 +77,17 @@ support_woke_x_pid3_att <- lm(support ~ woke*pid3, data = attentive, weights=wei
 pca_woke_x_pid3 <- lm(.fittedPC1 ~ woke*pid3, data = cleaned_data, weights=weight_1)
 pca_woke_x_pid3_att <- lm(.fittedPC1 ~ woke*pid3, data = attentive, weights=weight_1)
 
+sum_treat <- lm(sum~ treat, data = cleaned_data, weights=weight_1)
+sum_treat_att <- lm(sum ~ treat, data = attentive, weights=weight_1)
+sum_woke <- lm(sum~ woke, data = cleaned_data, weights=weight_1)
+sum_woke_att <- lm(sum ~ woke, data = attentive, weights=weight_1)
+sum_woke_x_ideo5_dbl <- lm(sum ~ woke*ideo5_dbl, data = cleaned_data, weights=weight_1)
+sum_woke_x_ideo5_dbl_att <- lm(sum ~ woke*ideo5_dbl, data = attentive, weights=weight_1)
+sum_woke_x_pvote <- lm(sum ~ woke*presvote20post, data = cleaned_data, weights=weight_1)
+sum_woke_x_pvote_att <- lm(sum ~ woke*presvote20post, data = attentive, weights=weight_1)
+sum_woke_x_pid3 <- lm(sum ~ woke*pid3, data = cleaned_data, weights=weight_1)
+sum_woke_x_pid3_att <- lm(sum ~ woke*pid3, data = attentive, weights=weight_1)
+
 
 save(p_import_woke, p_import_woke, p_import_woke_att, n_import_woke,
      n_import_woke_att, support_woke, support_woke_att, pca_woke, pca_woke_att,
@@ -89,4 +102,7 @@ save(p_import_woke, p_import_woke, p_import_woke_att, n_import_woke,
      pca_woke_x_pvote, pca_woke_x_pvote_att, p_import_woke_x_pid3,
      p_import_woke_x_pid3_att, n_import_woke_x_pid3, n_import_woke_x_pid3_att,
      support_woke_x_pid3, support_woke_x_pid3_att, pca_woke_x_pid3,
-     pca_woke_x_pid3_att, file = "../data/estimated_models.Rdata")
+     pca_woke_x_pid3_att, sum_treat, sum_treat_att, sum_woke_x_ideo5_dbl,
+     sum_woke, sum_woke_att, sum_woke_x_ideo5_dbl_att, sum_woke_x_pvote,
+     sum_woke_x_pvote_att, sum_woke_x_pid3, sum_woke_x_pid3_att,
+     file = "../data/estimated_models.Rdata")

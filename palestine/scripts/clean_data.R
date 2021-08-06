@@ -45,7 +45,8 @@ data2 <- data %>%
     support = UCL_1,
     american_interests = UCL_2,
     american_values = UCL_3
-  )
+  ) %>%
+  mutate(sum = support + american_interests + american_values)
 
 outcome_pca <- data2 %>%
   select(support, american_values, american_interests) %>%

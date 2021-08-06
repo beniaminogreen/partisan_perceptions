@@ -75,47 +75,23 @@ cleaned_data %>%
     stargazer(header=F, title="Summary Statistics: seconds spent on the survey")
 ```
 
-## PCA
-
-I create a set of composite outcomes using PCA which summarize responses to the
-three measures. The loadings for each principal component can be seen below.
-
-```{r, results='asis', echo=F}
-# Create plot of PCA Loadings
-
-rownames(outcome_pca$rotation) <- c("I support this decision",
-                                    "This policy reflects American Values",
-                                    "This is good for American interests")
-outcome_pca$rotation %>%
-    data.frame() %>%
-    stargazer(summary=F, title="Prinicipal Component Loadings", header=F)
-
-```
-
-The first principal component explains 89% of the variance meaning that it well
-explains almost all of the variation in the data.  PC1 is strongly negatively
-corrected with all three answers, suggesting that it encodes a respondent's
-general support / enthusiasm for the policy decision.
-
 # Analysis and Results
 
 First, I analyze the effects of the different framings on suport for the
 intervention as measured by the three questions. There are no differences in
 support between treated and control respondents for all treatments except
 uphold international law. Respondents who are told that the increased aid would
-help uphold international law are uniformly less likely to identify the action
-as consistent with American values or interests. Respondents exposed to the
-international law framing also give responses that correspond to high PC1
-values, indicating that this framing makes respondents in aggregate less likely
-to support intervention.
-
-I summarize these results with representative models describing the
-relationship between the framing and support as measured by the first
-principal component below.
+help uphold international law are uniformly less likely support the action, or
+to identify the action as consistent with American values or interests.
+Respondents exposed to the international law framing respond more negatively to
+all three questions combined, indicating that this framing makes respondents
+less likely to support the intervention.  I summarize these results with
+representative models describing the relationship between the framing and
+support as measured by the sum responses to the three questions in the survey.
 
 ```{r, results = "asis", echo=F}
-stargazer(pca_all, pca_att, header=F,
-          title = "principal component (negative = enthusiastic) on treatment",
+stargazer(sum_all, sum_att, header=F,
+          title = "Sum of responses regressed on treatment",
           column.labels=c("All respondents", "Attentive respondents"),
           dep.var.labels= "Principal Component 1",
           covariate.labels = c(
@@ -130,17 +106,17 @@ stargazer(pca_all, pca_att, header=F,
 
 I now investigate the effects of framings on support for aid to Palestine
 including the effect of respondent ideology. I run models regressing support as
-measured by each survey question, and by the principal component. Across all
-models, changing a respondent's ideology to be more liberal predicts a
-significant increase in their support for intervention. Representative models
-run on the principal component outcome can be seen below.
+measured by each survey question, and the sum of responses to all questions.
+Across all models, changing a respondent's ideology to be more liberal predicts
+a significant increase in their support for intervention. Representative models
+run on the sum of responses to the three questions be seen below.
 
 ```{r, results = "asis", echo=F}
 
-stargazer(pca_treat_ideo5_dbl, pca_treat_ideo5_dbl_att, header=F,
-          title = "principal component (negative = enthusiastic) on treatment",
+stargazer(sum_treat_ideo5_dbl, sum_treat_ideo5_dbl_att, header=F,
+          title = "Sum of responses to all questions regressed on treatments",
           column.labels=c("All respondents", "Attentive respondents"),
-          dep.var.labels= "Principal Component 1",
+          dep.var.labels= "Sum of responses to all questions",
           covariate.labels = c(
                                "Counter racial injustice",
                                "National security",
@@ -151,6 +127,25 @@ stargazer(pca_treat_ideo5_dbl, pca_treat_ideo5_dbl_att, header=F,
                               )
 )
 ```
+
+I also present the relationship between respondent ideology and support for the interventions in the plot below:
+
+```{r, include=TRUE, echo=FALSE, warn=FALSE, message=F}
+cleaned_data %>%
+    select(ideo5_dbl, sum) %>%
+    na.omit() %>%
+    ggplot(aes(x=ideo5_dbl, y=sum), na.rm=T) +
+    geom_jitter(alpha=.6) +
+    geom_smooth( method ="lm", se=T) +
+    xlab("Respondent Ideology (Positive = Conservative)") +
+    ylab("Sum of Responses to Questions") +
+    ggtitle("Sum of Responses Regressed on Ideology") +
+    theme_bw()
+
+
+```
+
+
 
 I then run models investigating whether there is an interaction between
 ideology and the effect the treatments have on support. Put simply: "Do the
@@ -168,10 +163,16 @@ effect observed in the first YouGov survey.
 
 load("data/monte_carlo_results.Rdata")
 
-rep_sims %>%
-    pivot_longer(c(prop_significant, prop_negative,
-                   exaggeration_factor),names_to="statistic") %>%
+rep_sims %>% pivot_longer(c(prop_significant, prop_negative,
+                            exaggeration_factor),names_to="statistic")  %>%
+    mutate(statistic = statistic %>%
+           recode(
+                  exaggeration_factor="Exaggeration Factor",
+                  prop_negative="Type S error rate",
+                  prop_significant="Power",
+                  )) %>%
     ggplot(aes(x=effect_size, y=value, col=statistic)) +
+    theme_bw()  +
     geom_line() +
     facet_wrap(~statistic, scales="free") +
     ggtitle("Replipicability Measures by Effect Size") +
@@ -186,6 +187,7 @@ sample_size_sims %>%
     geom_hline(yintercept=.8, linetype=2, color="grey") +
     ggtitle("Power to Detect Interaction Effect by Sample Size") +
     xlab("Sample Size") +
-    ylab("Statistical Power")
+    ylab("Statistical Power") +
+    theme_bw()
 
 ```

@@ -79,7 +79,8 @@ The following objects are masked from ‘package:base’:
 +     support = UCL_1,
 +     american_interests = UCL_2,
 +     american_values = UCL_3
-+   )
++   ) %>%
++   mutate(sum = support + american_interests + american_values)
 > 
 > outcome_pca <- data2 %>%
 +   select(support, american_values, american_interests) %>%
@@ -104,4 +105,4 @@ The following objects are masked from ‘package:base’:
 > 
 > proc.time()
    user  system elapsed 
-  1.284   0.048   1.319 
+  1.561   0.066   1.624 

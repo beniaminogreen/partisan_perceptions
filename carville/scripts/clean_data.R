@@ -3,6 +3,8 @@ library("tidyverse")
 library("lubridate")
 library("broom")
 
+sessionInfo()
+
 data <- read_spss("../data/UCL_Carville_June_21_US_Client.sav")
 
 data2 <- data %>%
@@ -48,7 +50,8 @@ data2 <- data %>%
       treat %in% c("BLM", "Racial equality") ~ "Racial justice issues",
       treat %in% c("Racial minorities", "Communities of color") ~ "Racial
       Equality issues"
-    )
+    ),
+    sum = support + nationally_important + personally_imporant
   )
 
 # Check no observations were lost

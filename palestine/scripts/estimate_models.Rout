@@ -153,27 +153,43 @@ The following objects are masked from ‘package:base’:
 > pca_treat_x_pvote <- lm(.fittedPC1 ~ treat*presvote20post, data = cleaned_data, weights=weight_1)
 > pca_treat_x_pvote_att <- lm(.fittedPC1 ~ treat*presvote20post, data = attentive, weights=weight_1)
 > 
+> sum_treat_ideo5_dbl <- lm(sum ~ treat+ideo5_dbl, data = cleaned_data, weights=weight_1)
+> sum_treat_ideo5_dbl_att <- lm(sum ~ treat+ideo5_dbl, data = attentive, weights=weight_1)
+> sum_treat_x_ideo5_dbl <- lm(sum ~ treat*ideo5_dbl, data = cleaned_data, weights=weight_1)
+> sum_treat_x_ideo5_dbl_att <- lm(sum ~ treat*ideo5_dbl, data = attentive, weights=weight_1)
+> sum_treat_pid3 <- lm(sum ~ treat+pid3, data = cleaned_data, weights=weight_1)
+> sum_treat_pid3_att <- lm(sum ~ treat+pid3, data = attentive, weights=weight_1)
+> sum_treat_x_pid3 <- lm(sum ~ treat*pid3, data = cleaned_data, weights=weight_1)
+> sum_treat_x_pid3_att <- lm(sum ~ treat*pid3, data = attentive, weights=weight_1)
+> sum_treat_pvote <- lm(sum ~ treat+presvote20post, data = cleaned_data, weights=weight_1)
+> sum_treat_pvote_att <- lm(sum ~ treat+presvote20post, data = attentive, weights=weight_1)
+> sum_treat_x_pvote <- lm(sum ~ treat*presvote20post, data = cleaned_data, weights=weight_1)
+> sum_treat_x_pvote_att <- lm(sum ~ treat*presvote20post, data = attentive, weights=weight_1)
+> 
 > save(support_treat, support_treat_att, support_treat_ideo5_dbl,
-+ 	 support_treat_ideo5_dbl_att, support_treat_x_ideo5_dbl,
-+ 	 support_treat_x_ideo5_dbl_att, support_pid3_dbl, support_pid3_dbl_att,
-+ 	 support_x_pid3_dbl, support_x_pid3_dbl_att, support_treat_pvote,
-+ 	 support_treat_pvote_att, support_treat_x_pvote, support_treat_x_pvote_att,
-+ 	 interests_all, interests_att, interests_treat_ideo5_dbl,
-+ 	 interests_treat_ideo5_dbl_att, interests_treat_x_ide5_dbl,
-+ 	 interests_treat_x_ideo5_dbl_att, interests_treat_pid3,
-+ 	 interests_treat_pid3_att, interests_treat_x_pid3,
-+ 	 interests_treat_x_pid3_att, interests_treat_pvote,
-+ 	 interests_treat_pvote_att, interests_treat_x_pvote,
-+ 	 interests_treat_x_pvote_att, values_treat_all, values_treat_att,
-+ 	 values_treat_ideo5_dbl, values_treat_ideo5_dbl_att,
-+ 	 values_treat_x_ideo5_dbl, values_treat_x_ideo5_dbl_att, values_treat_pid3,
-+ 	 values_treat_pid3_att, values_treat_x_pid3, values_treat_x_pid3_att,
-+ 	 values_treat_pvote, values_treat_pvote_att, values_treat_x_pvote,
-+ 	 values_treat_x_pvote_att, pca_all, pca_att, pca_treat_ideo5_dbl,
-+ 	 pca_treat_ideo5_dbl_att, pca_treat_x_ide5_dbl, pca_treat_x_ideo5_dbl_att,
-+ 	 pca_treat_pid3, pca_treat_pid3_att, pca_treat_x_pid3,
-+ 	 pca_treat_x_pid3_att, pca_treat_pvote, pca_treat_pvote_att,
-+ 	 pca_treat_x_pvote, pca_treat_x_pvote_att, file="../data/models.Rdata")
-Error in save(support_treat, support_treat_att, support_treat_ideo5_dbl,  : 
-  object ‘pca_treat_x_ide5_dbl’ not found
++      support_treat_ideo5_dbl_att, support_treat_x_ideo5_dbl,
++      support_treat_x_ideo5_dbl_att, support_pid3_dbl, support_pid3_dbl_att,
++      support_x_pid3_dbl, support_x_pid3_dbl_att, support_treat_pvote,
++      support_treat_pvote_att, support_treat_x_pvote, support_treat_x_pvote_att,
++      interests_all, interests_att, interests_treat_ideo5_dbl,
++      interests_treat_ideo5_dbl_att, interests_treat_x_ide5_dbl,
++      interests_treat_x_ideo5_dbl_att, interests_treat_pid3,
++      interests_treat_pid3_att, interests_treat_x_pid3,
++      interests_treat_x_pid3_att, interests_treat_pvote,
++      interests_treat_pvote_att, interests_treat_x_pvote,
++      interests_treat_x_pvote_att, values_treat_all, values_treat_att,
++      values_treat_ideo5_dbl, values_treat_ideo5_dbl_att,
++      values_treat_x_ideo5_dbl, values_treat_x_ideo5_dbl_att, values_treat_pid3,
++      values_treat_pid3_att, values_treat_x_pid3, values_treat_x_pid3_att,
++      values_treat_pvote, values_treat_pvote_att, values_treat_x_pvote,
++      values_treat_x_pvote_att, pca_all, pca_att, pca_treat_ideo5_dbl,
++      pca_treat_ideo5_dbl_att, pca_treat_x_ideo5_dbl, pca_treat_x_ideo5_dbl_att,
++      pca_treat_pid3, pca_treat_pid3_att, pca_treat_x_pid3, sum_treat_ideo5_dbl,
++      sum_treat_ideo5_dbl_att, sum_treat_x_ideo5_dbl, sum_treat_x_ideo5_dbl_att,
++      sum_treat_pid3, sum_treat_pid3_att, sum_treat_x_pid3, sum_treat_x_pid3_att
++      , sum_treat_pvote , sum_treat_pvote_att , sum_treat_x_pvote,
++      sum_treat_x_pvote_att pca_treat_x_pid3_att, pca_treat_pvote,
+Error: unexpected symbol in:
+"     , sum_treat_pvote , sum_treat_pvote_att , sum_treat_x_pvote,
+     sum_treat_x_pvote_att pca_treat_x_pid3_att"
 Execution halted
