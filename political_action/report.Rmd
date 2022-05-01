@@ -1,6 +1,5 @@
 ---
-title: This Article Looks Quite Authoritative
-author: Author Name
+title: YouGov Survey Analysis
 output: pdf_document
 urlcolor: blue
 ---
@@ -9,6 +8,7 @@ urlcolor: blue
 # This code loads the libraries used in the analysis into memory
 library(tidyverse)
 library(stargazer)
+library(effects)
 ```
 
 ```{r load_data, echo=F, include=F}
@@ -177,7 +177,6 @@ rename("Ideology" = "ideo5",
 	   "Female"="female",
 	   "Casualties"="casualties")
 
-
 summ_data %>%
 	data.frame() %>%
 	stargazer(title="Summary Statistics For All Respondents",header=F, digits=2)
@@ -198,7 +197,81 @@ data %>%
 	data.frame() %>%
 	stargazer(title = "Mean Responses by Party, Action Alignment",summary=F, digits=2, header=F)
 
+
+data %>%
+    select(terrorism, strategic, moral_just) %>%
+    pivot_longer(everything(), names_to = "question") %>%
+    group_by(question, value) %>%
+    tally() %>%
+    pivot_wider(names_from = question, values_from = n) %>%
+    mutate(
+        terrorism = terrorism / sum(terrorism),
+        strategic = strategic / sum(strategic),
+        moral_just = moral_just / sum(moral_just),
+        value = value %>%
+            dplyr::recode(
+                `-3` = "Strongly Disagree",
+                `-2` = "Disagree",
+                `-1` = "Somewhat Disagree",
+                `0` = "Neutral",
+                `1` = "Somewhat Agree",
+                `2` = "Agree",
+                `3` = "Strongly Agree"
+            )
+    ) %>%
+    data.frame() %>%
+    mutate_at(
+              c("terrorism", "strategic", "moral_just"),
+              ~ paste0(round(.x*100,2), "%")) %>%
+    stargazer(
+        header = F,
+        summary = F,
+        covariate.labels =
+            c("Response","Morally Justifiable", "Strategic", "Terrorism"),
+        title = "Table of responses",
+        rownames=F
+    )
+
 ```
+
+```{r, echo=F}
+
+data %>%
+    filter(factor_ideo5 != "Not Sure") %>%
+    mutate(factor_ideo5 = factor(factor_ideo5, levels=c("(V.) Conservative", "Moderate", "(V.) Liberal"))) %>%
+    ggplot(aes(x=terrorism)) +
+    geom_histogram(binwidth=1) +
+    facet_wrap(~factor_ideo5) +
+    ggtitle("Distribution of Responses to Terrorism Question by Ideology") +
+	xlab("Perceptions of Terroism \n(Higher Scores Mean More Terroristic)")
+
+ggsave("charts/terrorism_distributions.png", width=12, height=5)
+
+data %>%
+    filter(factor_ideo5 != "Not Sure") %>%
+    mutate(factor_ideo5 = factor(factor_ideo5, levels=c("(V.) Conservative", "Moderate", "(V.) Liberal"))) %>%
+    ggplot(aes(x=strategic)) +
+    geom_histogram(binwidth=1) +
+    facet_wrap(~factor_ideo5) +
+    ggtitle("Distribution of Responses to Strategy Question by Ideology") +
+	xlab("Perceptions of Strategy \n(Higher Scores Mean More Strategic)")
+
+ggsave("charts/strategy_distributions.png", width=12, height=5)
+
+data %>%
+    filter(factor_ideo5 != "Not Sure") %>%
+    mutate(factor_ideo5 = factor(factor_ideo5, levels=c("(V.) Conservative", "Moderate", "(V.) Liberal"))) %>%
+    ggplot(aes(x=moral_just)) +
+    geom_histogram(binwidth=1) +
+    facet_wrap(~factor_ideo5) +
+    ggtitle("Distribution of Responses to Moral Justification Question by Ideology") +
+	xlab("Perceptions of Moral Justification \n(Higher Scores Mean More Justified)")
+
+ggsave("charts/moral_just_distributions.png", width=12, height=5)
+
+```
+
+
 
 # Ideology on Moral Justification
 
@@ -294,17 +367,46 @@ stargazer(factor_ideo_moral1, factor_ideo_moral2, factor_ideo_moral3, factor_ide
 
 ## Effects Graph
 ```{r, message=F,echo=F}
-data %>%
-	ggplot(aes(x=conservative_action, y=moral_just, group=factor_ideo5, linetype=factor_ideo5)) +
-	geom_smooth(aes(weight=weight_pol), col="black", method="lm") +
-	ggtitle("Interaction Effects of Ideology / Conservative Action on Perception\nOf Moral Justification") +
-	ylab("Moral Justification\n(Higher Scores Mean More Justified)") +
-	xlab("Action type") +
-	scale_x_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
-	labs(linetype = "Respondent ideology") +
-	theme_classic()
+# m_just_graph_data <- data %>%
+#     group_by(conservative_action, factor_ideo5) %>%
+#     filter(factor_ideo5 != "Not Sure") %>%
+#     mutate(factor_ideo5 = factor(factor_ideo5, levels=c("(V.) Conservative", "Moderate", "(V.) Liberal"))) %>%
+#     summarize(moral_just=weighted.mean(moral_just,weight_pol)) %>%
+#     select(conservative_action, factor_ideo5, moral_just)
 
-ggsave("charts/partisanship_justification.png")
+
+# m_just_graph_data %>%
+#     ggplot(
+#            aes(x=factor_ideo5,
+#                y=moral_just,
+#                group=conservative_action,
+#                linetype=conservative_action,
+#                shape=conservative_action)) +
+#     geom_point() +
+#     geom_line() +
+# 	ggtitle("mean perception of action as morally justified \nby respondent ideology and action type") +
+# 	scale_shape_discrete(labels=c( "false" = "liberal", "true" = "conservative")) +
+# 	scale_linetype_discrete(labels=c( "false" = "liberal", "true" = "conservative")) +
+# 	labs(linetype = "action type", shape="action type") +
+# 	ylab("moral justification\n(higher scores mean more justified)") +
+# 	xlab("respondent type")  +
+#     theme_classic()
+
+
+data %>%
+    filter(factor_ideo5 != "Not Sure") %>%
+    mutate(factor_ideo5 = factor(factor_ideo5, levels=c("(V.) Conservative", "Moderate", "(V.) Liberal"))) %>%
+    ggplot(aes(x=factor_ideo5, y=moral_just, fill=conservative_action)) +
+    geom_boxplot(outlier.alpha=.5) +
+    scale_fill_grey(start = .55, end = .75)  +
+	labs(fill = "Action was Conservative") +
+	ggtitle("Perception of actions as morally justified \nby respondent ideology and action type") +
+	ylab("moral justification\n(higher scores means actions were more justified)") +
+	xlab("respondent ideology")  +
+    coord_flip() +
+    theme_bw()
+
+ggsave("charts/partisanship_justification.png", width=11)
 
 ```
 
@@ -415,17 +517,54 @@ stargazer(factor_ideo_strategic1, factor_ideo_strategic2, factor_ideo_strategic3
 
 ## Effects Graph
 ```{r, message=F,echo=F}
-data %>%
-	ggplot(aes(x=conservative_action, y=strategic, group=factor_ideo5, linetype=factor_ideo5)) +
-	geom_smooth(aes(weight=weight_pol), col="black", method="lm") +
-	ggtitle("Interaction Effects of Ideology / Conservative Action on Perceptions\nOf Strategy") +
-	ylab("Perceptions of Strategy \n(Higher Scores Mean More Strategic)") +
-	xlab("Action type") +
-	scale_x_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
-	labs(linetype = "Respondent ideology") +
-	theme_classic()
 
-ggsave("charts/partisanship_strategy.png")
+# data %>%
+# 	ggplot(aes(x=conservative_action, y=strategic, group=factor_ideo5, linetype=factor_ideo5)) +
+# 	geom_smooth(aes(weight=weight_pol), col="black", method="lm") +
+# 	ggtitle("Interaction Effects of Ideology / Conservative Action on Perceptions\nOf Strategy") +
+# 	ylab("Perceptions of Strategy \n(Higher Scores Mean More Strategic)") +
+# 	xlab("Action type") +
+# 	scale_x_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
+# 	labs(linetype = "Respondent ideology") +
+# 	theme_classic()
+
+# data %>%
+#     group_by(conservative_action, factor_ideo5) %>%
+#     filter(factor_ideo5 != "Not Sure") %>%
+#     mutate(factor_ideo5 = factor(factor_ideo5, levels=c("(V.) Conservative", "Moderate", "(V.) Liberal"))) %>%
+#     summarize(strategic=weighted.mean(strategic,weight_pol)) %>%
+#     select(conservative_action, factor_ideo5, strategic) %>%
+#     ggplot(
+#            aes(x=factor_ideo5,
+#                y=strategic,
+#                group=conservative_action,
+#                linetype=conservative_action,
+#                shape=conservative_action)) +
+#     geom_point() +
+#     geom_line() +
+# 	ggtitle("Mean Perception of Action as Strategic \nBy Respondent Ideology and Action Type") +
+# 	scale_shape_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
+# 	scale_linetype_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
+# 	labs(linetype = "Action Type", shape="Action Type") +
+# 	ylab("Perceptions of Strategy \n(Higher Scores Mean More Strategic)") +
+# 	xlab("Respondent Type") +
+#     theme_classic()
+
+data %>%
+    filter(factor_ideo5 != "Not Sure") %>%
+    mutate(factor_ideo5 = factor(factor_ideo5, levels=c("(V.) Conservative", "Moderate", "(V.) Liberal"))) %>%
+    ggplot(aes(x=factor_ideo5, y=strategic, fill=conservative_action)) +
+    geom_boxplot(outlier.alpha=.5) +
+    scale_fill_grey(start = .55, end = .75)  +
+	labs(fill = "Action was Conservative") +
+	ggtitle("Perception of actions as strategic \nby respondent ideology and action type") +
+	ylab("Strategic \n(higher scores means actions were more strategic)") +
+	xlab("Respondent ideology")  +
+    coord_flip() +
+    theme_bw()
+
+
+ggsave("charts/partisanship_strategy.png", width=11)
 ```
 
 ## Effects of Casualties
@@ -543,17 +682,44 @@ they reacted to conservative actions.
 
 ## Effects Graph
 ```{r, message=F,echo=F,warn=F}
-data %>%
-	ggplot(aes(x=conservative_action, y=terrorism, group=factor_ideo5, linetype=factor_ideo5)) +
-	geom_smooth(aes(weight=weight_pol), col="black", method="lm") +
-	ggtitle("Interaction Effects of Ideology / Conservative Action on Perceptions\nOf Terroism") +
-	ylab("Perceptions of Terroism \n(Higher Scores Mean More Terroristic)") +
-	xlab("Action type") +
-	scale_x_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
-	labs(linetype = "Respondent ideology") +
-	theme_classic()
+# data %>%
+#     group_by(conservative_action, factor_ideo5) %>%
+#     filter(factor_ideo5 != "Not Sure") %>%
+#     mutate(factor_ideo5 = factor(factor_ideo5, levels=c("(V.) Conservative", "Moderate", "(V.) Liberal"))) %>%
+#     summarize(terrorism=weighted.mean(terrorism,weight_pol)) %>%
+#     select(conservative_action, factor_ideo5, terrorism) %>%
+#     ggplot(
+#            aes(x=factor_ideo5,
+#                y=terrorism,
+#                group=conservative_action,
+#                linetype=conservative_action,
+#                shape=conservative_action)) +
+#     geom_point() +
+#     geom_line() +
+# 	ggtitle("Mean Perception of Action as Terrorism \nBy Respondent Ideology and Action Type") +
+# 	scale_shape_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
+# 	scale_linetype_discrete(labels=c( "FALSE" = "Liberal", "TRUE" = "Conservative")) +
+# 	labs(linetype = "Action Type", shape="Action Type") +
+# 	ylab("Perceptions of Terroism \n(Higher Scores Mean More Terroristic)") +
+# 	xlab("Respondent Type")  +
+#     theme_classic()
 
-ggsave("charts/parsanship_terrorism.png")
+data %>%
+    filter(factor_ideo5 != "Not Sure") %>%
+    mutate(factor_ideo5 = factor(factor_ideo5, levels=c("(V.) Conservative", "Moderate", "(V.) Liberal"))) %>%
+    ggplot(aes(x=factor_ideo5, y=terrorism, fill=conservative_action)) +
+    geom_boxplot(outlier.alpha=.5) +
+    scale_fill_grey(start = .55, end = .75)  +
+	labs(fill = "Action was Conservative") +
+	ggtitle("Perception of actions as terrorism \nby respondent ideology and action type") +
+	ylab("Perceptions of Terroism \n(Higher Scores Mean More Terroristic)") +
+	xlab("Respondent ideology")  +
+    coord_flip() +
+    theme_bw()
+
+
+ggsave("charts/partisanship_terrorism.png", width=11)
+
 ```
 
 ## Effects of Casualties

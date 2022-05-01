@@ -1,0 +1,225 @@
+R -e "require(rmarkdown); sessionInfo(); render('report.Rmd')"
+
+R version 4.1.2 (2021-11-01) -- "Bird Hippie"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> require(rmarkdown); sessionInfo(); render('report.Rmd')
+R version 4.1.2 (2021-11-01)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Arch Linux
+
+Matrix products: default
+BLAS:   /usr/lib/libblas.so.3.10.0
+LAPACK: /usr/lib/liblapack.so.3.10.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] rmarkdown_2.11
+
+loaded via a namespace (and not attached):
+[1] compiler_4.1.2  fastmap_1.1.0   tools_4.1.2     htmltools_0.5.2
+[5] knitr_1.34      xfun_0.26       digest_0.6.28   rlang_0.4.11   
+[9] evaluate_0.14  
+  |                                                                              |                                                                      |   0%  |                                                                              |..                                                                    |   3%
+  ordinary text without R code
+
+  |                                                                              |....                                                                  |   5%
+label: load_libraries (with options) 
+List of 2
+ $ echo   : logi FALSE
+ $ include: logi FALSE
+
+  |                                                                              |.....                                                                 |   8%
+  ordinary text without R code
+
+  |                                                                              |.......                                                               |  10%
+label: load_data (with options) 
+List of 2
+ $ echo   : logi FALSE
+ $ include: logi FALSE
+
+  |                                                                              |.........                                                             |  13%
+  ordinary text without R code
+
+  |                                                                              |...........                                                           |  15%
+label: summary_statistics (with options) 
+List of 2
+ $ results: chr "asis"
+ $ echo   : logi FALSE
+
+  |                                                                              |.............                                                         |  18%
+  ordinary text without R code
+
+  |                                                                              |..............                                                        |  21%
+label: unnamed-chunk-1 (with options) 
+List of 1
+ $ echo: logi FALSE
+
+  |                                                                              |................                                                      |  23%
+  ordinary text without R code
+
+  |                                                                              |..................                                                    |  26%
+label: idology_moral_responsibility (with options) 
+List of 2
+ $ results: chr "asis"
+ $ echo   : logi FALSE
+
+  |                                                                              |....................                                                  |  28%
+  ordinary text without R code
+
+  |                                                                              |......................                                                |  31%
+label: iedology_2_moral_responsibility (with options) 
+List of 2
+ $ results: chr "asis"
+ $ echo   : logi FALSE
+
+  |                                                                              |.......................                                               |  33%
+  ordinary text without R code
+
+  |                                                                              |.........................                                             |  36%
+label: unnamed-chunk-2 (with options) 
+List of 2
+ $ message: logi FALSE
+ $ echo   : logi FALSE
+
+  |                                                                              |...........................                                           |  38%
+  ordinary text without R code
+
+  |                                                                              |.............................                                         |  41%
+label: unnamed-chunk-3 (with options) 
+List of 2
+ $ message: logi FALSE
+ $ echo   : logi FALSE
+
+  |                                                                              |...............................                                       |  44%
+  ordinary text without R code
+
+  |                                                                              |................................                                      |  46%
+label: ideology_strategic (with options) 
+List of 2
+ $ results: chr "asis"
+ $ echo   : logi FALSE
+
+  |                                                                              |..................................                                    |  49%
+  ordinary text without R code
+
+  |                                                                              |....................................                                  |  51%
+label: factor_ideology_strategic (with options) 
+List of 2
+ $ results: chr "asis"
+ $ echo   : logi FALSE
+
+  |                                                                              |......................................                                |  54%
+  ordinary text without R code
+
+  |                                                                              |.......................................                               |  56%
+label: unnamed-chunk-4 (with options) 
+List of 2
+ $ message: logi FALSE
+ $ echo   : logi FALSE
+
+  |                                                                              |.........................................                             |  59%
+  ordinary text without R code
+
+  |                                                                              |...........................................                           |  62%
+label: unnamed-chunk-5 (with options) 
+List of 2
+ $ message: logi FALSE
+ $ echo   : logi FALSE
+
+  |                                                                              |.............................................                         |  64%
+  ordinary text without R code
+
+  |                                                                              |...............................................                       |  67%
+label: ideology_terrorism (with options) 
+List of 2
+ $ results: chr "asis"
+ $ echo   : logi FALSE
+
+  |                                                                              |................................................                      |  69%
+  ordinary text without R code
+
+  |                                                                              |..................................................                    |  72%
+label: factor_ideology_terrorism (with options) 
+List of 2
+ $ results: chr "asis"
+ $ echo   : logi FALSE
+
+  |                                                                              |....................................................                  |  74%
+  ordinary text without R code
+
+  |                                                                              |......................................................                |  77%
+label: unnamed-chunk-6 (with options) 
+List of 3
+ $ message: logi FALSE
+ $ echo   : logi FALSE
+ $ warn   : logi FALSE
+
+  |                                                                              |........................................................              |  79%
+  ordinary text without R code
+
+  |                                                                              |.........................................................             |  82%
+label: unnamed-chunk-7 (with options) 
+List of 2
+ $ message: logi FALSE
+ $ echo   : logi FALSE
+
+  |                                                                              |...........................................................           |  85%
+  ordinary text without R code
+
+  |                                                                              |.............................................................         |  87%
+label: unnamed-chunk-8 (with options) 
+List of 2
+ $ results: chr "asis"
+ $ echo   : logi FALSE
+
+  |                                                                              |...............................................................       |  90%
+  ordinary text without R code
+
+  |                                                                              |.................................................................     |  92%
+label: unnamed-chunk-9 (with options) 
+List of 2
+ $ results: chr "asis"
+ $ echo   : logi FALSE
+
+  |                                                                              |..................................................................    |  95%
+  ordinary text without R code
+
+  |                                                                              |....................................................................  |  97%
+label: unnamed-chunk-10 (with options) 
+List of 2
+ $ results: chr "asis"
+ $ echo   : logi FALSE
+
+  |                                                                              |......................................................................| 100%
+  ordinary text without R code
+
+
+/usr/bin/pandoc +RTS -K512m -RTS report.knit.md --to latex --from markdown+autolink_bare_uris+tex_math_single_backslash --output report.tex --lua-filter /home/beniamino/R/x86_64-pc-linux-gnu-library/4.1/rmarkdown/rmarkdown/lua/pagebreak.lua --lua-filter /home/beniamino/R/x86_64-pc-linux-gnu-library/4.1/rmarkdown/rmarkdown/lua/latex-div.lua --self-contained --highlight-style tango --pdf-engine pdflatex --variable graphics --variable 'geometry:margin=1in' 
+> 
+> 

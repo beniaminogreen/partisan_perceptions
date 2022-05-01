@@ -1,14 +1,20 @@
 ---
 title: YouGov Survey Data Analysis
-author: Author Name
+author: Beniamino Green
 output: pdf_document
 urlcolor: blue
+header-includes:
+   - \usepackage{float}
 ---
 
 ```{r load_libraries, echo=F, include=F}
 # This code loads the libraries used in the analysis into memory
 library(tidyverse)
 library(stargazer)
+
+load("data/cleaned_data.Rdata")
+load("data/estimated_models.Rdata")
+
 ```
 
 # Introduction
@@ -31,13 +37,134 @@ Respondents were then asked to respond to the following three statements on a sc
 2. These issues are important to me.
 3. These issues are important for American society.
 
+I give a breakdown for the answers to these questions below. The columns in the
+table show the question being asked, and the rows give the response. Each cell
+value gives the fraction of respondents who answered with the given response to
+the question. Tables 2 and 3 show this same information for respondents exposed
+to woke and non-woke framings respectively.
 
-## Preliminaries:
+```{r, echo = F, results = "asis"}
 
-```{r load_data, echo=F, include=F}
-load("data/cleaned_data.Rdata")
-load("data/estimated_models.Rdata")
+cross_tabler <-function(df)
+{
+    df %>%
+    select(personally_important, nationally_important, support) %>%
+    pivot_longer(everything(), names_to = "question") %>%
+    group_by(question, value) %>%
+    tally() %>%
+    pivot_wider(names_from = question, values_from = n) %>%
+    mutate(
+        nationally_important = nationally_important / sum(nationally_important),
+        personally_important = personally_important / sum(personally_important),
+        support = support / sum(support),
+        value = value %>%
+            dplyr::recode(
+                `-3` = "Strongly Disagree",
+                `-2` = "Disagree",
+                `-1` = "Somewhat Disagree",
+                `0` = "Neutral",
+                `1` = "Somewhat Agree",
+                `2` = "Agree",
+                `3` = "Strongly Agree"
+            )
+    ) %>%
+    data.frame() %>%
+    mutate_at(
+              c("personally_important", "nationally_important", "support"),
+              ~ paste0(round(.x*100,2), "%"))
+
+}
+
+cleaned_data %>%
+    cross_tabler() %>%
+    stargazer(
+        header = F,
+          table.placement = "H",
+        summary = F,
+        rownames=F,
+        title="Table of responses to survey questions for respondents exposed to all framings",
+        covariate.labels = c("Response", "Personally Important", "Nationally
+                             Important", "Support")
+    )
+
+cleaned_data %>%
+    filter(woke) %>%
+    cross_tabler() %>%
+    stargazer(
+        header = F,
+          table.placement = "H",
+        summary = F,
+        rownames=F,
+        title="Table of responses to survey questions for respondents exposed to woke framings",
+        covariate.labels = c("Response", "Personally Important", "Nationally
+                             Important", "Support")
+    )
+
+cleaned_data %>%
+    filter(!woke) %>%
+    cross_tabler() %>%
+    stargazer(
+        header = F,
+          table.placement = "H",
+        summary = F,
+        rownames=F,
+        title="Table of responses to survey questions for respondents exposed to non-woke framings",
+        covariate.labels = c("Response", "Personally Important", "Nationally
+                             Important", "Support")
+    )
+
 ```
+
+I also give summary statistics for each question, showing the mean answer on a
+scale of -3 to 3 (positive = agree), as well as the standard deviation, and
+$25^{th}$ and $75^{th}$ percentile responses.
+
+```{r, results = "asis", echo = F}
+
+cleaned_data %>%
+    select(personally_important, nationally_important, support) %>%
+    data.frame() %>%
+    stargazer(
+              header = F,
+              table.placement = "H",
+              title = "Summary Statistics: Responses By Question Asked",
+              covariate.labels=c('Personally Important','Nationally Important','Support')
+    )
+
+```
+
+For the main models in the paper, I summed responses these three questions into
+a single variable encoding general support. This variable ranges from -9 to 9,
+and has a mean of 2.03 and standard deviation of 5.694. I provide this
+information in a tabular format in table 2:
+
+```{r, results = "asis", echo = F}
+cleaned_data %>%
+    select(sum) %>%
+    data.frame() %>%
+    stargazer(
+              table.placement = "H",
+              header = F,
+              covariate.labels = "Summed Responses",
+              title = "Summary Statistics: Sum of Responses"
+    )
+```
+
+I also provide a histogram showing the overall distribution of this outcome
+variable:
+
+```{r, echo = F}
+cleaned_data %>%
+    ggplot(aes(x=sum)) +
+    geom_histogram(binwidth=1) +
+    theme_bw() +
+    xlab("Sum of Responses to all Questions") +
+    ylab("Count of Respondents") +
+    ggtitle("Distribution of Summed Responses to Survey Questions")
+```
+
+
+# Assessing the Attentive
 
 As was the case with the Palestine survey, a subset of respondents appear to
 not be reading the vignettes / questions before they respond. This would
@@ -55,9 +182,11 @@ cleaned_data %>%
     filter(seconds_spent < 10*60) %>%
     select(seconds_spent) %>%
     data.frame() %>%
-    stargazer(header=F, title="Summary Statistics: Seconds spent on the survey")
+    stargazer(header=F,
+          table.placement = "H",
+          title="Summary Statistics: Seconds spent on the survey"
+    )
 ```
-
 
 
 # Analysis
@@ -72,12 +201,13 @@ framing from "non-woke" to "woke" significantly decreases support and
 perceptions of the bill as important.
 
 ```{r, results="asis", echo=F}
-cat("\\setcounter{table}{0}")
+#cat("\\setcounter{table}{0}")
 
 stargazer(sum_woke, sum_woke_att,
           title = "Sum of answers of questions on woke framing",
           dep.var.labels= "Sum of Answers",
           covariate.labels = c("Woke", "Intercept"),
+          table.placement = "H",
           header=F)
 ```
 
@@ -96,7 +226,7 @@ cleaned_data %>%
     geom_signif(comparisons = list(c("Woke", "Non-woke")),
                 test="t.test",
                 map_signif_level = TRUE) +
-    ggtitle("Average Support by framing") +
+    ggtitle("Average Support by Framing") +
     xlab("Woke / non woke framing") +
     ylab("Sum of responses to 3 questions") +
     theme_bw() +
@@ -115,11 +245,12 @@ evidence is ambivalent.
 
 ```{r results="asis", echo=F}
 
-
 stargazer(sum_woke_x_ideo5_dbl, sum_woke_x_ideo5_dbl_att,
           header = F,
+          table.placement = "H",
           title = "Sum of responses to survey questions on woke framing",
           dep.var.labels= "Sum of Responses",
+          column.labels = c("All Respondents", "Attentive Respondents"),
           covariate.labels = c("Woke","Ideology","Woke X Ideology", "Intercept")
 
 )
@@ -131,4 +262,63 @@ at conventional significance levels. This result is consistent across all
 measures of ideology and party affiliation, indicating that a respondents'
 party, ideology, and past voting had no effect on how they responded to a
 framing being "woke" or not.
+
+
+# Appendix:
+
+## Models for Effect of Woke Framing Among Respondents Exposed to Each Condition
+
+Finally, I provide models showing the effect of the woke framing among
+respondents exposed to each individual condition. Table 3 shows the effect of a
+woke framing on support for only respondents exposed to questions about Latino
+communities. Tables 4 and 5 show the effects of a woke framing on respondents
+only exposed to the BLM questions or racial equality questions, respectively.
+
+```{r, echo=F, results = "asis"}
+
+stargazer(
+          title = "Support among respondents exposed to Latino communities question",
+          sum_woke_latino, sum_woke_ideo5_latino,
+          sum_woke_x_ideo5_latino,
+          covariate.labels = c(
+               "Woke", "Ideology",
+               "Woke X Ideology", "Intercept"
+           ),
+          header = F,
+          table.placement = "H",
+          dep.var.labels= "Sum of Responses")
+
+```
+
+```{r, echo=F, results = "asis"}
+
+stargazer(
+          title = "Support among respondents exposed to BLM question",
+          sum_woke_blm, sum_woke_ideo5_blm,
+          sum_woke_x_ideo5_blm,
+          covariate.labels = c(
+               "Woke", "Ideology",
+               "Woke X Ideology", "Intercept"
+           ),
+          header = F,
+          table.placement = "H",
+          dep.var.labels= "Sum of Responses")
+
+```
+
+```{r, echo=F, results = "asis"}
+
+stargazer(
+          title = "Support among respondents exposed to racial equality question",
+          sum_woke_racial, sum_woke_ideo5_racial,
+          sum_woke_x_ideo5_racial,
+          covariate.labels = c(
+               "Woke", "Ideology",
+               "Woke X Ideology", "Intercept"
+           ),
+          header = F,
+          table.placement = "H",
+          dep.var.labels= "Sum of Responses")
+
+```
 

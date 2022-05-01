@@ -41,25 +41,25 @@ data2 <- data %>%
   rename(
     treat = UCLsplit,
     support = UCL_1,
-    personally_imporant = UCL_2,
+    personally_important = UCL_2,
     nationally_important = UCL_3
   ) %>%
   mutate(
     issue = case_when(
-      treat %in% c("Latinx", "Hispanic/Latino") ~ "Hispanic issues",
-      treat %in% c("BLM", "Racial equality") ~ "Racial justice issues",
-      treat %in% c("Racial minorities", "Communities of color") ~ "Racial
-      Equality issues"
+      treat %in% c("Latinx", "Hispanic/Latino") ~ "Latino communities",
+      treat %in% c("BLM", "Racial equality") ~ "BLM / racial equality protests ",
+      treat %in% c("Racial minorities", "Communities of color") ~ "Racial equality"
     ),
-    sum = support + nationally_important + personally_imporant
+    sum = support + nationally_important + personally_important
   )
 
 # Check no observations were lost
 stopifnot(nrow(data) == nrow(data2))
 
+# create PCR outcome (not used)
 pca <- prcomp(data2 %>% select(
   support, nationally_important,
-  personally_imporant
+  personally_important
 ))
 
 data2 <- pca %>%
@@ -68,9 +68,9 @@ data2 <- pca %>%
 attentive <- data2 %>%
   filter(seconds_spent > 5, seconds_spent < 300)
 
-# check that pruning was performed
+# check that pruning was performed, i.e. that some observations were dropped
 stopifnot(nrow(attentive) < nrow(data2))
 
 cleaned_data <- data2
 
-save(cleaned_data,pca,attentive, file = "../data/cleaned_data.Rdata")
+save(cleaned_data, pca, attentive, file = "../data/cleaned_data.Rdata")
